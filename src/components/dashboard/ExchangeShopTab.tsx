@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ShoppingBag, Search, Package, Settings, Loader2 } from "lucide-react";
+import { ShoppingBag, Search, Package, Settings, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { formatUnits } from "viem";
 import { useReadContract, useAccount } from "wagmi";
 import { CONTRACT_ADDRESSES, CONTRACT_ABIS } from "@/config/contracts";
@@ -18,8 +19,10 @@ export const ExchangeShopTab = () => {
   const [showAdmin, setShowAdmin] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const { isOwner } = useIsContractOwner();
   const { address } = useAccount();
+  const isMobile = useIsMobile();
 
   // Get total items from smart contract
   const { data: totalItems, isLoading: loadingTotal, refetch: refetchTotal } = useReadContract({
@@ -103,6 +106,18 @@ export const ExchangeShopTab = () => {
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Pagination for mobile
+  const itemsPerPage = isMobile ? 4 : filteredItems.length;
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = isMobile ? filteredItems.slice(startIndex, endIndex) : filteredItems;
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -163,7 +178,7 @@ export const ExchangeShopTab = () => {
             </CardContent>
           </Card>
         ) : (
-          filteredItems.map((item) => (
+          paginatedItems.map((item) => (
             <Card
               key={item.id}
               className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
@@ -198,6 +213,31 @@ export const ExchangeShopTab = () => {
           ))
         )}
       </div>
+
+      {/* Mobile Pagination */}
+      {isMobile && filteredItems.length > itemsPerPage && (
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {selectedItem && (
         <ItemDetailsModal

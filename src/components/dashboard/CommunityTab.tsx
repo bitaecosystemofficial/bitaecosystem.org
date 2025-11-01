@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   Calendar, 
   Share2, 
@@ -55,6 +56,8 @@ const CommunityTab = () => {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const { writeContract } = useWriteContract();
+  const isMobile = useIsMobile();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const [checkInStreak, setCheckInStreak] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
@@ -529,21 +532,67 @@ const CommunityTab = () => {
                 {category.description} • {categoryTasks.filter(t => t.completed).length} of {categoryTasks.length} completed
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {categoryTasks.map((task) => {
-                const TaskIcon = task.icon;
-                const isLinkActive = !task.activationDate || Date.now() >= task.activationDate;
-                
-                return (
-                  <TaskCard 
-                    key={task.id}
-                    task={task}
-                    TaskIcon={TaskIcon}
-                    isLinkActive={isLinkActive}
-                    onTaskAction={handleTaskAction}
-                  />
-                );
-              })}
+            <CardContent>
+              {category.id === 'check-in' && isMobile ? (
+                // Mobile: Swipeable horizontal scroll for check-in
+                <div 
+                  ref={scrollContainerRef}
+                  className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  {categoryTasks.map((task) => {
+                    const TaskIcon = task.icon;
+                    const isLinkActive = !task.activationDate || Date.now() >= task.activationDate;
+                    
+                    return (
+                      <div key={task.id} className="flex-shrink-0 w-[85vw] snap-center">
+                        <TaskCard 
+                          task={task}
+                          TaskIcon={TaskIcon}
+                          isLinkActive={isLinkActive}
+                          onTaskAction={handleTaskAction}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : category.id === 'check-in' ? (
+                // Desktop: 5 containers per row for check-in
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-4">
+                  {categoryTasks.map((task) => {
+                    const TaskIcon = task.icon;
+                    const isLinkActive = !task.activationDate || Date.now() >= task.activationDate;
+                    
+                    return (
+                      <TaskCard 
+                        key={task.id}
+                        task={task}
+                        TaskIcon={TaskIcon}
+                        isLinkActive={isLinkActive}
+                        onTaskAction={handleTaskAction}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                // Other categories: vertical list
+                <div className="space-y-4">
+                  {categoryTasks.map((task) => {
+                    const TaskIcon = task.icon;
+                    const isLinkActive = !task.activationDate || Date.now() >= task.activationDate;
+                    
+                    return (
+                      <TaskCard 
+                        key={task.id}
+                        task={task}
+                        TaskIcon={TaskIcon}
+                        isLinkActive={isLinkActive}
+                        onTaskAction={handleTaskAction}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         );
