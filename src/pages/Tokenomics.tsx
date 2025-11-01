@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coins, PieChart, Lock, ShoppingCart, Gift, ArrowRightLeft, Wallet, Crown, Users, Store, TrendingUp, Flame, Award } from "lucide-react";
+import { Coins, PieChart, FileText, Flame, TrendingDown } from "lucide-react";
 import { motion } from "framer-motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Tokenomics = () => {
   const keyMetrics = [
@@ -13,43 +12,11 @@ const Tokenomics = () => {
     { label: "Burn Mechanism", value: "Active" }
   ];
 
-  const stakingAPY = [
-    { duration: "180 Days Lock", apy: "12% APY", color: "bg-primary" },
-    { duration: "240 Days Lock", apy: "18% APY", color: "bg-accent" },
-    { duration: "365 Days Lock", apy: "25% APY", color: "bg-secondary" }
-  ];
-
-  const tokenUsage = [
-    {
-      icon: <ShoppingCart className="w-6 h-6" />,
-      title: "Buy BIT",
-      description: "Purchase BIT tokens using USDT-BEP20 or USDC-BEP20 at a fixed price of $0.00108 per BIT. Available on BSC, Polygon, Arbitrum, and Base networks. Minimum purchase of 100,000 BIT tokens to get started."
-    },
-    {
-      icon: <Gift className="w-6 h-6" />,
-      title: "Collect BIT",
-      description: "Earn BIT tokens as rewards through multiple activities: daily login bonuses, referral programs, completing tasks, participating in community events, and engaging with our ecosystem partners."
-    },
-    {
-      icon: <Lock className="w-6 h-6" />,
-      title: "Stake & Grow BIT",
-      description: "Lock your BIT tokens in our staking platform to earn passive rewards. Choose from multiple staking tiers with competitive APY rates. The longer you stake, the higher your rewards potential."
-    },
-    {
-      icon: <ArrowRightLeft className="w-6 h-6" />,
-      title: "Swap BIT",
-      description: "Seamlessly swap your BIT tokens with other cryptocurrencies through our integrated DEX. Trade with minimal fees, instant execution, and full transparency on the blockchain."
-    },
-    {
-      icon: <Wallet className="w-6 h-6" />,
-      title: "Earn BIT",
-      description: "Generate BIT token rewards by staking, referring friends, shopping at partner merchants, participating in governance, and contributing to community growth. Multiple earning streams available."
-    },
-    {
-      icon: <Crown className="w-6 h-6" />,
-      title: "Membership Benefits",
-      description: "Unlock exclusive perks with tiered membership levels. Higher tiers offer premium features, enhanced reward multipliers, priority support, and early access to new opportunities."
-    }
+  const contractAddresses = [
+    { label: "Token Contract", address: "0x1234...5678", icon: <Coins className="w-5 h-5" /> },
+    { label: "Presale Contract", address: "0x2345...6789", icon: <TrendingDown className="w-5 h-5" /> },
+    { label: "Staking Contract", address: "0x3456...7890", icon: <PieChart className="w-5 h-5" /> },
+    { label: "Exchange Shop Contract", address: "0x4567...8901", icon: <FileText className="w-5 h-5" /> }
   ];
 
   const tokenDistribution = [
@@ -84,48 +51,6 @@ const Tokenomics = () => {
     { category: "Charity Works", percentage: 4, color: "bg-secondary/30" }
   ];
 
-  const benefitsData = {
-    holders: [
-      "Stake BIT tokens to earn competitive APY rewards passively",
-      "Access tiered membership benefits with exclusive perks and features",
-      "Participate in governance voting to shape ecosystem decisions",
-      "Receive enhanced reward multipliers for long-term holding",
-      "Earn bonus BIT rewards through referral program participation",
-      "Get priority access to new features and token sale events",
-      "Unlock premium support channels and dedicated account management",
-      "Build reputation score for increased rewards and special opportunities"
-    ],
-    community: [
-      "Earn BIT rewards for active participation in community events",
-      "Participate in regular airdrops and community reward distributions",
-      "Create educational content to earn BIT token incentives",
-      "Engage in governance proposals and voting for BIT rewards",
-      "Complete social media tasks and campaigns for BIT earnings",
-      "Contribute to forums and help other members for reward bonuses",
-      "Join ambassador programs to earn consistent BIT incentives",
-      "Access exclusive community-only features and early announcements"
-    ],
-    customers: [
-      "Pay merchants using USDT/USDC across 4 blockchain networks",
-      "Earn BIT token cashback rewards on every purchase made",
-      "Receive instant payment confirmation with blockchain transparency",
-      "Collect bonus BIT rewards for shopping frequency milestones",
-      "Access exclusive merchant discounts and promotional offers",
-      "Choose preferred network based on transaction fees and speed",
-      "Earn additional BIT tokens through customer referral programs",
-      "Progress through reward tiers to unlock enhanced cashback rates"
-    ],
-    merchants: [
-      "Accept USDT/USDC payments on BSC, Polygon, Arbitrum, and Base networks",
-      "Receive instant settlement in stablecoins with zero chargeback risk",
-      "Earn BIT token rewards for every transaction processed",
-      "Access comprehensive analytics dashboard for sales and BIT earnings",
-      "Get BIT bonus rewards for achieving monthly transaction milestones",
-      "Benefit from lower transaction fees compared to traditional payment processors",
-      "Earn additional BIT rewards for referring new merchant partners",
-      "Integrate easily with existing POS systems and e-commerce platforms"
-    ]
-  };
 
   return (
     <div className="min-h-screen pt-20 pb-12">
@@ -178,177 +103,82 @@ const Tokenomics = () => {
           </Card>
         </motion.div>
 
-        {/* Deflationary Model */}
+        {/* Contract Addresses */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
           className="mb-12"
         >
-          <Card className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <Flame className="w-6 h-6 text-destructive" />
-                Deflationary Model
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg">
-                <span className="font-bold text-destructive">0.5%</span> of every transaction is burned, reducing total supply over time and increasing scarcity.
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Staking APY */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mb-12"
-        >
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-2">
-                <Lock className="w-6 h-6 text-primary" />
-                Staking APY
+                <FileText className="w-6 h-6 text-primary" />
+                Smart Contracts
               </CardTitle>
-              <CardDescription>Earn competitive rewards by locking your BIT tokens</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {stakingAPY.map((stake, index) => (
-                  <Card key={index} className="bg-gradient-to-br from-primary/5 to-accent/5">
-                    <CardHeader>
-                      <CardTitle className="text-lg">{stake.duration}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold text-primary">{stake.apy}</p>
-                    </CardContent>
-                  </Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {contractAddresses.map((contract, index) => (
+                  <div key={index} className="flex flex-col p-4 rounded-lg bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-2 text-primary">
+                      {contract.icon}
+                      <span className="font-medium text-sm">{contract.label}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground font-mono break-all">{contract.address}</span>
+                  </div>
                 ))}
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Token Usage */}
+        {/* Deflationary Model - Two Columns */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mb-12"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
+              <CardHeader>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <Flame className="w-6 h-6 text-destructive" />
+                  Rebates Burn
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg">
+                  <span className="font-bold text-destructive">1%</span> of every rebate bought from merchants is permanently burned — reducing total supply and enhancing scarcity over time.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-primary/10 to-accent/5 border-primary/20">
+              <CardHeader>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <TrendingDown className="w-6 h-6 text-primary" />
+                  Tax
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg">
+                  <span className="font-bold text-primary">3% Buy / 3% Sell</span> tax applied on all transactions, contributing to liquidity, rewards, and project sustainability.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </motion.div>
+
+        {/* Token Distribution & Funding Allocation - Two Columns */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="mb-12"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          <h2 className="text-3xl font-bold mb-6 text-center">Token Usage</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tokenUsage.map((usage, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 * index }}
-              >
-                <Card className="h-full hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                        {usage.icon}
-                      </div>
-                      <CardTitle className="text-xl">{usage.title}</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">{usage.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* BIT Rewards Ecosystem */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="mb-12"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <Award className="w-6 h-6 text-primary" />
-                BIT Rewards Ecosystem
-              </CardTitle>
-              <CardDescription>Earn BIT tokens as rewards - Payments processed via USDT/USDC on 4 networks</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="holders" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-6">
-                  <TabsTrigger value="holders">Token Holders</TabsTrigger>
-                  <TabsTrigger value="community">Community</TabsTrigger>
-                  <TabsTrigger value="customers">Customers</TabsTrigger>
-                  <TabsTrigger value="merchants">Merchants</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="holders" className="space-y-2">
-                  <h3 className="font-semibold text-lg mb-3">For Token Holders</h3>
-                  <ul className="space-y-2">
-                    {benefitsData.holders.map((benefit, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="text-primary mt-1">•</span>
-                        <span className="text-muted-foreground">{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </TabsContent>
-
-                <TabsContent value="community" className="space-y-2">
-                  <h3 className="font-semibold text-lg mb-3">For the Community</h3>
-                  <ul className="space-y-2">
-                    {benefitsData.community.map((benefit, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="text-primary mt-1">•</span>
-                        <span className="text-muted-foreground">{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </TabsContent>
-
-                <TabsContent value="customers" className="space-y-2">
-                  <h3 className="font-semibold text-lg mb-3">For Customers</h3>
-                  <ul className="space-y-2">
-                    {benefitsData.customers.map((benefit, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="text-primary mt-1">•</span>
-                        <span className="text-muted-foreground">{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </TabsContent>
-
-                <TabsContent value="merchants" className="space-y-2">
-                  <h3 className="font-semibold text-lg mb-3">For Merchants</h3>
-                  <ul className="space-y-2">
-                    {benefitsData.merchants.map((benefit, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="text-primary mt-1">•</span>
-                        <span className="text-muted-foreground">{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Token Distribution */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-          className="mb-12"
-        >
+          {/* Token Distribution */}
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Token Distribution</CardTitle>
@@ -375,14 +205,8 @@ const Tokenomics = () => {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
 
-        {/* Funding Allocation */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-        >
+          {/* Funding Allocation */}
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Funding Allocation</CardTitle>
