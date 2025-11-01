@@ -8,7 +8,7 @@ const Overview = () => {
   const sections = [
     {
       icon: Wallet,
-      title: 'What is Bit Access?',
+      title: 'About Us',
       content:
         'Bit Access (BIT) is a revolutionary reward token that incentivizes Web3 adoption. Merchants accept USDT/USDC stablecoins for payments, while customers earn BIT tokens as rewards, creating a win-win ecosystem for all participants.',
     },
@@ -19,10 +19,17 @@ const Overview = () => {
         'Our mission is to bridge traditional commerce with Web3 through stablecoin payments and reward tokens. We envision a future where merchants benefit from instant settlements and customers earn valuable rewards with every purchase.',
     },
     {
-      icon: Lock,
-      title: 'Simple & Secure',
-      content:
-        'Connect your wallet in seconds with our intuitive Web3Modal integration. Your transactions are secured by blockchain technology while maintaining the simplicity of traditional payment systems.',
+      icon: Award,
+      title: 'Core Values',
+      content: '',
+      values: [
+        'Transparency: All transactions on blockchain with full audit trails',
+        'Innovation: Bridging Web2 commerce with Web3 technology',
+        'Community: Building a sustainable ecosystem for all participants',
+        'Security: Enterprise-grade protection and multi-sig wallets',
+        'Accessibility: Simple onboarding for users of all experience levels',
+        'Sustainability: Long-term value creation through deflationary tokenomics'
+      ],
     },
   ];
 
@@ -66,24 +73,6 @@ const Overview = () => {
     },
   ];
 
-  const roadmap = [
-    {
-      phase: 'Phase 1: Foundation',
-      items: ['Token launch and initial distribution', 'Smart contract deployment across networks', 'Launch staking platform with multiple tiers', 'Onboard first merchant partners'],
-    },
-    {
-      phase: 'Phase 2: Expansion',
-      items: ['DEX integration for token swaps', 'Mobile wallet app development', 'Expand merchant network globally', 'Implement tiered membership system'],
-    },
-    {
-      phase: 'Phase 3: Ecosystem Growth',
-      items: ['Launch governance platform for voting', 'Cross-chain bridge implementation', 'Advanced analytics dashboard release', 'Partnership with major e-commerce platforms'],
-    },
-    {
-      phase: 'Phase 4: Mass Adoption',
-      items: ['Global payment processor integration', 'Enterprise merchant solutions', 'DeFi yield farming opportunities', 'Worldwide community expansion'],
-    },
-  ];
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -116,7 +105,17 @@ const Overview = () => {
                   <CardTitle className="text-2xl">{section.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">{section.content}</p>
+                  {section.content && <p className="text-muted-foreground leading-relaxed">{section.content}</p>}
+                  {section.values && (
+                    <ul className="space-y-3">
+                      {section.values.map((value, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                          <span className="text-muted-foreground">{value}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -165,50 +164,6 @@ const Overview = () => {
           </div>
         </motion.div>
 
-        {/* Roadmap */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="mb-20"
-        >
-          <h2 className="text-4xl font-bold text-center mb-4">Development Roadmap</h2>
-          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-            Our strategic plan for ecosystem growth and expansion
-          </p>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {roadmap.map((phase, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-border h-full">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-                        {index + 1}
-                      </div>
-                      <h3 className="text-lg font-bold">{phase.phase}</h3>
-                    </div>
-                    <ul className="space-y-2">
-                      {phase.items.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-muted-foreground">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
 
         {/* Security & Compliance */}
         <motion.div
