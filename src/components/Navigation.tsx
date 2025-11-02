@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Wallet } from 'lucide-react';
+import { Menu, X, Wallet, PieChart, MapPin, HelpCircle, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -46,10 +46,10 @@ const Navigation = () => {
   ];
 
   const mobileOnlyLinks = [
-    { path: '/tokenomics-simplified', label: 'Tokenomics Simplified' },
-    { path: '/roadmap', label: 'Roadmap' },
-    { path: '/how-it-works', label: 'How It Works' },
-    { path: '/whitepaper', label: 'Whitepaper' },
+    { path: '/tokenomics-simplified', label: 'Tokenomics Simplified', icon: PieChart },
+    { path: '/roadmap', label: 'Roadmap', icon: MapPin },
+    { path: '/how-it-works', label: 'How It Works', icon: HelpCircle },
+    { path: '/whitepaper', label: 'Whitepaper', icon: FileText },
   ];
 
   const formatAddress = (addr: string) => {
@@ -111,8 +111,8 @@ const Navigation = () => {
                   {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-sm z-[100]">
-                {/* Navigation Links */}
+              <DropdownMenuContent align="end" className="w-64 bg-card/95 backdrop-blur-sm z-[100]">
+                {/* Regular Navigation Links - Only shown when NOT connected */}
                 {!isConnected && navLinks.map((link) => (
                   <DropdownMenuItem key={link.path} asChild>
                     <Link 
@@ -125,18 +125,33 @@ const Navigation = () => {
                   </DropdownMenuItem>
                 ))}
                 
-                {/* Mobile Only Links */}
-                {!isConnected && mobileOnlyLinks.map((link) => (
-                  <DropdownMenuItem key={link.path} asChild>
-                    <Link 
-                      to={link.path} 
-                      className={`cursor-pointer ${location.pathname === link.path ? 'text-primary' : ''}`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
+                {/* Additional Pages - Only shown when connected */}
+                {isConnected && (
+                  <>
+                    <div className="px-2 py-2 text-xs font-semibold text-muted-foreground">
+                      Resources
+                    </div>
+                    {mobileOnlyLinks.map((link) => {
+                      const Icon = link.icon;
+                      return (
+                        <DropdownMenuItem key={link.path} asChild>
+                          <Link 
+                            to={link.path} 
+                            className={`cursor-pointer flex items-center gap-3 p-3 ${
+                              location.pathname === link.path ? 'bg-primary/10 text-primary' : ''
+                            }`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <Icon className="w-4 h-4 text-primary" />
+                            </div>
+                            <span className="text-sm font-medium">{link.label}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </>
+                )}
                 
                 {/* Wallet Section */}
                 <DropdownMenuItem className="border-t mt-2 pt-2">
