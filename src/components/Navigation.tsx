@@ -45,6 +45,13 @@ const Navigation = () => {
     { path: '/contact', label: 'Contact Us' },
   ];
 
+  const mobileOnlyLinks = [
+    { path: '/tokenomics-simplified', label: 'Tokenomics Simplified' },
+    { path: '/roadmap', label: 'Roadmap' },
+    { path: '/how-it-works', label: 'How It Works' },
+    { path: '/whitepaper', label: 'Whitepaper' },
+  ];
+
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
@@ -104,9 +111,22 @@ const Navigation = () => {
                   {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-sm">
+              <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-sm z-[100]">
                 {/* Navigation Links */}
                 {!isConnected && navLinks.map((link) => (
+                  <DropdownMenuItem key={link.path} asChild>
+                    <Link 
+                      to={link.path} 
+                      className={`cursor-pointer ${location.pathname === link.path ? 'text-primary' : ''}`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                
+                {/* Mobile Only Links */}
+                {!isConnected && mobileOnlyLinks.map((link) => (
                   <DropdownMenuItem key={link.path} asChild>
                     <Link 
                       to={link.path} 

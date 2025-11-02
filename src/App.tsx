@@ -15,6 +15,10 @@ import Tokenomics from "./pages/Tokenomics";
 import Helpdesk from "./pages/Helpdesk";
 import ContactUs from "./pages/ContactUs";
 import Dashboard from "./pages/Dashboard";
+import TokenomicsSimplified from "./pages/TokenomicsSimplified";
+import Roadmap from "./pages/Roadmap";
+import HowItWorks from "./pages/HowItWorks";
+import Whitepaper from "./pages/Whitepaper";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +56,10 @@ const App = () => (
             <Route path="/overview" element={<Overview />} />
             <Route path="/ecosystem" element={<Ecosystem />} />
             <Route path="/tokenomics" element={<Tokenomics />} />
+            <Route path="/tokenomics-simplified" element={<TokenomicsSimplified />} />
+            <Route path="/roadmap" element={<Roadmap />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/whitepaper" element={<Whitepaper />} />
             <Route path="/helpdesk" element={<Helpdesk />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/dashboard" element={<Dashboard />} />
