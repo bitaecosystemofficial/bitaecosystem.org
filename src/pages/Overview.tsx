@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import usdtLogo from '@/assets/usdt-logo.png';
 import usdcLogo from '@/assets/usdc-logo.png';
 import aboutUsImage from '@/assets/about-us-image.png';
+import missionVisionImage from '@/assets/mission-vision-image.png';
+import coreValuesImage from '@/assets/core-values-image.png';
 
 const Overview = () => {
   const sections = [
@@ -16,14 +18,14 @@ const Overview = () => {
     },
     {
       icon: Users,
-      image: aboutUsImage,
+      image: missionVisionImage,
       title: 'Mission & Vision',
       content:
         'Our mission is to bridge traditional commerce with Web3 through stablecoin payments and reward tokens. We envision a future where merchants benefit from instant settlements and customers earn valuable rewards with every purchase.',
     },
     {
       icon: Award,
-      image: aboutUsImage,
+      image: coreValuesImage,
       title: 'Core Values',
       content: '',
       values: [
@@ -129,14 +131,16 @@ const Overview = () => {
                       )}
                       
                       {section.values && (
-                        <ul className="space-y-3 mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                           {section.values.map((value, i) => (
-                            <li key={i} className="flex items-start gap-3">
-                              <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                              <span className="text-muted-foreground">{value}</span>
-                            </li>
+                            <Card key={i} className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+                              <CardContent className="p-4 flex items-start gap-3">
+                                <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                                <span className="text-muted-foreground text-sm">{value}</span>
+                              </CardContent>
+                            </Card>
                           ))}
-                        </ul>
+                        </div>
                       )}
                     </div>
                   </div>
