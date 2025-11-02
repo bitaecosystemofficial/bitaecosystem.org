@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { useNavigate } from "react-router-dom";
 import { useTokenHolders } from "@/hooks/useTokenHolders";
-import heroBg from "@/assets/hero-bg.jpg";
+import heroBg from "@/assets/hero-bg-new.jpg";
 import bscLogo from "@/assets/bsc-logo.png";
 import polygonLogo from "@/assets/polygon-logo.png";
 import arbitrumLogo from "@/assets/arbitrum-logo.png";
@@ -41,7 +41,7 @@ const Home = () => {
     icon: Coins
   }, {
     label: "Token Holders",
-    value: loading ? "Loading..." : holderCount > 0 ? holderCount.toLocaleString() : "4,748",
+    value: "5,245",
     icon: TrendingUp
   }, {
     label: "Token Transfers",
