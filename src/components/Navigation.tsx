@@ -127,42 +127,6 @@ const Navigation = () => {
 
           {/* Desktop - Connect Wallet */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Resources Menu - Only shown when connected */}
-            {isConnected && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="relative">
-                    <Menu className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-96 bg-card/95 backdrop-blur-sm z-[100] p-4">
-                  <div className="mb-3">
-                    <h3 className="text-sm font-semibold text-muted-foreground">Resources</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {mobileOnlyLinks.map((link) => {
-                      const Icon = link.icon;
-                      const modalKey = link.path.replace('/', '').replace(/how-it-works/g, 'howitworks');
-                      return (
-                        <button
-                          key={link.path}
-                          onClick={() => handleModalOpen(modalKey)}
-                          className="flex flex-col items-center gap-2 p-4 rounded-lg border transition-all hover:border-primary/50 hover:bg-primary/5 border-border bg-card/50"
-                        >
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Icon className="w-6 h-6 text-primary" />
-                          </div>
-                          <span className="text-xs font-medium text-center leading-tight">
-                            {link.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            
             <Button
               onClick={() => open()}
               className="bg-primary text-primary-foreground hover:bg-primary/90 font-mono"
@@ -171,106 +135,64 @@ const Navigation = () => {
             </Button>
           </div>
 
-          {/* Mobile Menu */}
-          {!isDashboard && (
+          {/* Mobile Menu - Only show resources when connected */}
+          {!isDashboard && isConnected && (
             <div className="md:hidden flex items-center gap-2">
               <DropdownMenu open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  size="icon" 
-                  variant="ghost"
-                  className="text-foreground"
-                >
-                  {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 bg-card/95 backdrop-blur-sm z-[100]">
-                {/* Regular Navigation Links - Only shown when NOT connected */}
-                {!isConnected && navLinks.map((link) => (
-                  <DropdownMenuItem key={link.path} asChild>
-                    <Link 
-                      to={link.path} 
-                      className={`cursor-pointer ${location.pathname === link.path ? 'text-primary' : ''}`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-                
-                {/* Additional Pages - Only shown when connected */}
-                {isConnected && (
-                  <>
-                    <div className="px-2 py-2 text-xs font-semibold text-muted-foreground">
-                      Resources
-                    </div>
-                    {mobileOnlyLinks.map((link) => {
-                      const Icon = link.icon;
-                      const modalKey = link.path.replace('/', '').replace(/how-it-works/g, 'howitworks');
-                      return (
-                        <DropdownMenuItem key={link.path} asChild>
-                          <button 
-                            onClick={() => handleModalOpen(modalKey)}
-                            className="cursor-pointer flex items-center gap-3 p-3 w-full text-left"
-                          >
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                              <Icon className="w-4 h-4 text-primary" />
-                            </div>
-                            <span className="text-sm font-medium">{link.label}</span>
-                          </button>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </>
-                )}
-                
-                {/* Wallet Section */}
-                <DropdownMenuItem className="border-t mt-2 pt-2">
-                  {isConnected && address ? (
-                    <div className="flex flex-col gap-2 w-full">
-                      <span className="font-mono text-sm">{formatAddress(address)}</span>
-                      <Button 
-                        onClick={() => {
-                          disconnect();
-                          setIsMobileMenuOpen(false);
-                        }}
-                        variant="destructive"
-                        size="sm"
-                        className="w-full"
-                      >
-                        Disconnect
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button 
-                      onClick={() => {
-                        open();
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="w-full bg-primary text-primary-foreground"
-                    >
-                      <Wallet className="w-4 h-4 mr-2" />
-                      Connect Wallet
-                    </Button>
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    size="icon" 
+                    variant="ghost"
+                    className="text-foreground"
+                  >
+                    {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 bg-card/95 backdrop-blur-sm z-[100]">
+                  <div className="px-2 py-2 text-xs font-semibold text-muted-foreground">
+                    Resources
+                  </div>
+                  {mobileOnlyLinks.map((link) => {
+                    const Icon = link.icon;
+                    const modalKey = link.path.replace('/', '').replace(/how-it-works/g, 'howitworks');
+                    return (
+                      <DropdownMenuItem key={link.path} asChild>
+                        <button 
+                          onClick={() => handleModalOpen(modalKey)}
+                          className="cursor-pointer flex items-center gap-3 p-3 w-full text-left"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Icon className="w-4 h-4 text-primary" />
+                          </div>
+                          <span className="text-sm font-medium">{link.label}</span>
+                        </button>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+          
+          {/* Mobile Connect Wallet Button - Only show when not connected */}
+          {!isDashboard && !isConnected && (
+            <div className="md:hidden">
+              <Button 
+                onClick={() => open()}
+                size="sm"
+                className="bg-primary text-primary-foreground"
+              >
+                <Wallet className="w-4 h-4 mr-2" />
+                Connect
+              </Button>
             </div>
           )}
         </div>
 
       </div>
 
-      {/* Desktop Dialog */}
-      <Dialog open={openModal !== null && window.innerWidth >= 768} onOpenChange={() => setOpenModal(null)}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          {renderModalContent()}
-        </DialogContent>
-      </Dialog>
-
-      {/* Mobile Sheet */}
-      <Sheet open={openModal !== null && window.innerWidth < 768} onOpenChange={() => setOpenModal(null)}>
+      {/* Mobile Sheet for Resources */}
+      <Sheet open={openModal !== null} onOpenChange={() => setOpenModal(null)}>
         <SheetContent side="bottom" className="h-[95vh] overflow-y-auto p-0">
           <div className="sticky top-0 bg-background z-10 border-b px-6 py-4">
             <SheetHeader>
