@@ -260,7 +260,7 @@ const Ecosystem = () => {
           </div>
         </motion.div>
 
-        {/* How Ecosystem Works Flowchart */}
+        {/* How Ecosystem Works */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -273,163 +273,145 @@ const Ecosystem = () => {
             A complete flow of value creation within the BIT ecosystem
           </p>
 
-          <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/30 max-w-5xl mx-auto">
-            <CardContent className="p-8">
-              <div className="flex flex-col gap-8">
-                {/* Step 1 */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
-                  viewport={{ once: true }}
-                  className="flex items-center gap-4"
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
-                    1
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Step 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true }}
+            >
+              <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
+                      1
+                    </div>
+                    <Store className="w-8 h-8 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                      <Store className="w-6 h-6 text-primary" />
-                      Merchants Accept USDT/USDC
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Partner merchants accept stablecoin payments (USDT/USDC) on BSC, Polygon, Arbitrum, and Base networks for goods and services
-                    </p>
-                  </div>
-                </motion.div>
+                  <h3 className="text-xl font-bold mb-3">Merchants Accept USDT/USDC</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Partner merchants accept stablecoin payments (USDT/USDC) on BSC, Polygon, Arbitrum, and Base networks for goods and services
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-                <div className="flex justify-center">
-                  <Zap className="w-8 h-8 text-primary animate-pulse" />
-                </div>
+            {/* Step 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
+              <Card className="bg-gradient-to-br from-secondary/30 to-secondary/10 border-secondary/30 h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
+                      2
+                    </div>
+                    <Users className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">Customers Pay with Stablecoins</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Customers complete purchases using USDT/USDC from their Web3 wallets with instant settlement and blockchain transparency
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-                {/* Step 2 */}
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  viewport={{ once: true }}
-                  className="flex items-center gap-4"
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
-                    2
+            {/* Step 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <Card className="bg-gradient-to-br from-accent/30 to-accent/10 border-accent/30 h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
+                      3
+                    </div>
+                    <Gift className="w-8 h-8 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                      <Users className="w-6 h-6 text-primary" />
-                      Customers Pay with Stablecoins
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Customers complete purchases using USDT/USDC from their Web3 wallets with instant settlement and blockchain transparency
-                    </p>
-                  </div>
-                </motion.div>
+                  <h3 className="text-xl font-bold mb-3">BIT Rewards Distributed</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Both customers and merchants earn BIT tokens as rewards for every transaction - creating mutual value and incentivizing adoption
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-                <div className="flex justify-center">
-                  <Zap className="w-8 h-8 text-primary animate-pulse" />
-                </div>
+            {/* Step 4 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
+                      4
+                    </div>
+                    <Lock className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">Stake BIT for Rewards</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Token holders stake BIT to earn passive APY rewards, contributing to ecosystem stability and earning additional tokens
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-                {/* Step 3 */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  viewport={{ once: true }}
-                  className="flex items-center gap-4"
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
-                    3
+            {/* Step 5 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              viewport={{ once: true }}
+            >
+              <Card className="bg-gradient-to-br from-secondary/30 to-secondary/10 border-secondary/30 h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
+                      5
+                    </div>
+                    <Repeat className="w-8 h-8 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                      <Gift className="w-6 h-6 text-primary" />
-                      BIT Rewards Distributed
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Both customers and merchants earn BIT tokens as rewards for every transaction - creating mutual value and incentivizing adoption
-                    </p>
-                  </div>
-                </motion.div>
+                  <h3 className="text-xl font-bold mb-3">Trade & Utilize BIT</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Swap BIT on DEX, access tiered benefits, participate in governance, and unlock exclusive perks throughout the ecosystem
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-                <div className="flex justify-center">
-                  <Zap className="w-8 h-8 text-primary animate-pulse" />
-                </div>
-
-                {/* Step 4 */}
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                  viewport={{ once: true }}
-                  className="flex items-center gap-4"
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
-                    4
+            {/* Step 6 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              viewport={{ once: true }}
+            >
+              <Card className="bg-gradient-to-br from-accent/30 to-accent/10 border-accent/30 h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
+                      6
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                      <Lock className="w-6 h-6 text-primary" />
-                      Stake BIT for Rewards
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Token holders stake BIT to earn passive APY rewards, contributing to ecosystem stability and earning additional tokens
-                    </p>
-                  </div>
-                </motion.div>
-
-                <div className="flex justify-center">
-                  <Zap className="w-8 h-8 text-primary animate-pulse" />
-                </div>
-
-                {/* Step 5 */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                  viewport={{ once: true }}
-                  className="flex items-center gap-4"
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
-                    5
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                      <Repeat className="w-6 h-6 text-primary" />
-                      Trade & Utilize BIT
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Swap BIT on DEX, access tiered benefits, participate in governance, and unlock exclusive perks throughout the ecosystem
-                    </p>
-                  </div>
-                </motion.div>
-
-                <div className="flex justify-center">
-                  <Zap className="w-8 h-8 text-primary animate-pulse" />
-                </div>
-
-                {/* Step 6 */}
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
-                  viewport={{ once: true }}
-                  className="flex items-center gap-4"
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl flex-shrink-0">
-                    6
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                      <TrendingUp className="w-6 h-6 text-primary" />
-                      Ecosystem Growth
-                    </h3>
-                    <p className="text-muted-foreground">
-                      More merchants join, more customers earn, more value created - a self-sustaining cycle of Web3 adoption and growth
-                    </p>
-                  </div>
-                </motion.div>
-              </div>
-            </CardContent>
-          </Card>
+                  <h3 className="text-xl font-bold mb-3">Ecosystem Growth</h3>
+                  <p className="text-muted-foreground text-sm">
+                    More merchants join, more customers earn, more value created - a self-sustaining cycle of Web3 adoption and growth
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
         </motion.div>
 
         {/* Technology Stack */}

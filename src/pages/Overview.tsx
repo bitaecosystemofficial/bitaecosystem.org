@@ -90,7 +90,7 @@ const Overview = () => {
         </motion.div>
 
         {/* Main Sections */}
-        <div className="grid md:grid-cols-3 gap-8 mb-20">
+        <div className="space-y-16 mb-20">
           {sections.map((section, index) => (
             <motion.div
               key={index}
@@ -99,23 +99,43 @@ const Overview = () => {
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="bg-card border-border h-full hover:border-primary transition-all duration-300">
-                <CardHeader>
-                  <section.icon className="w-12 h-12 text-primary mb-4" />
-                  <CardTitle className="text-2xl">{section.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {section.content && <p className="text-muted-foreground leading-relaxed">{section.content}</p>}
-                  {section.values && (
-                    <ul className="space-y-3">
-                      {section.values.map((value, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                          <span className="text-muted-foreground">{value}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+              <Card className="bg-card border-border overflow-hidden">
+                <CardContent className="p-0">
+                  <div className={`grid md:grid-cols-2 gap-0 ${index % 2 === 0 ? '' : 'md:flex-row-reverse'}`}>
+                    {/* Image Placeholder */}
+                    <div className={`relative h-64 md:h-auto bg-gradient-to-br ${
+                      index === 0 ? 'from-primary/20 to-primary/5' : 
+                      index === 1 ? 'from-secondary/30 to-secondary/10' : 
+                      'from-accent/20 to-accent/10'
+                    } flex items-center justify-center ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}>
+                      <section.icon className="w-24 h-24 text-primary/40" />
+                    </div>
+
+                    {/* Content */}
+                    <div className={`p-8 md:p-12 flex flex-col justify-center ${index % 2 === 0 ? 'md:order-2' : 'md:order-1'}`}>
+                      <div className="flex items-center gap-3 mb-4">
+                        <section.icon className="w-10 h-10 text-primary" />
+                        <h2 className="text-3xl font-bold">{section.title}</h2>
+                      </div>
+                      
+                      {section.content && (
+                        <p className="text-muted-foreground text-lg leading-relaxed mb-4">
+                          {section.content}
+                        </p>
+                      )}
+                      
+                      {section.values && (
+                        <ul className="space-y-3 mt-4">
+                          {section.values.map((value, i) => (
+                            <li key={i} className="flex items-start gap-3">
+                              <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                              <span className="text-muted-foreground">{value}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
