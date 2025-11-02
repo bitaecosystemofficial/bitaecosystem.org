@@ -203,6 +203,11 @@
             "internalType": "string",
             "name": "imageUrl",
             "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "merchantWhatsApp",
+            "type": "string"
           }
         ],
         "internalType": "struct ExchangeShop.Item",
@@ -389,6 +394,11 @@
         "internalType": "string",
         "name": "imageUrl",
         "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "merchantWhatsApp",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -424,6 +434,11 @@
       {
         "internalType": "string",
         "name": "imageUrl",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "merchantWhatsApp",
         "type": "string"
       }
     ],

@@ -62,7 +62,7 @@ export const ExchangeShopTab = () => {
           if (response.ok) {
             const itemData = await response.json();
             if (itemData && itemData.data) {
-              const [id, name, description, price, merchant, stock, active, category, imageUrl] = itemData.data;
+              const [id, name, description, price, merchant, stock, active, category, imageUrl, merchantWhatsApp] = itemData.data;
               itemsArray.push({
                 id: Number(id),
                 name,
@@ -73,6 +73,7 @@ export const ExchangeShopTab = () => {
                 active,
                 category,
                 imageUrl,
+                merchantWhatsApp: merchantWhatsApp || "",
               });
             }
           }

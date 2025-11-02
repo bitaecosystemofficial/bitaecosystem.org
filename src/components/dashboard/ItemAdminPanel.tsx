@@ -28,15 +28,16 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
     stock: '',
     category: 'Electronics',
     imageUrl: '/placeholder.svg',
+    merchantWhatsApp: '',
   });
 
   const categories = ['Electronics', 'Fashion', 'Home & Living', 'Sports', 'Books', 'Gaming', 'Other'];
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.price || !formData.stock) {
+    if (!formData.name || !formData.price || !formData.stock || !formData.merchantWhatsApp) {
       toast({
         title: "Missing Fields",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields including WhatsApp number",
         variant: "destructive",
       });
       return;
@@ -53,10 +54,10 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
           formData.name,
           formData.description,
           priceInSmallestUnit,
-          formData.merchant as `0x${string}`,
           BigInt(formData.stock),
           formData.category,
           formData.imageUrl,
+          formData.merchantWhatsApp,
         ],
       } as any);
 
@@ -74,6 +75,7 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
         stock: '',
         category: 'Electronics',
         imageUrl: '/placeholder.svg',
+        merchantWhatsApp: '',
       });
     } catch (error: any) {
       console.error("Error listing item:", error);
@@ -154,6 +156,19 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
               />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="merchantWhatsApp">Merchant WhatsApp Number *</Label>
+              <Input
+                id="merchantWhatsApp"
+                placeholder="+1234567890"
+                value={formData.merchantWhatsApp}
+                onChange={(e) => setFormData({ ...formData, merchantWhatsApp: e.target.value })}
+              />
+              <p className="text-sm text-muted-foreground">
+                Order details will be sent to this WhatsApp number
+              </p>
             </div>
 
             <div className="space-y-2 md:col-span-2">

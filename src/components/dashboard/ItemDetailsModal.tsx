@@ -7,8 +7,10 @@ import { formatUnits } from "viem";
 import { useTokenApproval } from "@/hooks/useTokenApproval";
 import { useExchange } from "@/hooks/useExchange";
 import { toast } from "@/hooks/use-toast";
-import type { Item } from "@/types/Item";
+import type { Item, ShippingInfo } from "@/types/Item";
 import { ReceiptModal } from "./ReceiptModal";
+import { ShippingFormModal } from "./ShippingFormModal";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ItemDetailsModalProps {
   item: Item;
@@ -17,26 +19,57 @@ interface ItemDetailsModalProps {
 }
 
 export const ItemDetailsModal = ({ item, open, onClose }: ItemDetailsModalProps) => {
-  const [step, setStep] = useState<"approve" | "exchange" | "receipt">("approve");
+  const [step, setStep] = useState<"approve" | "shipping" | "exchange" | "receipt">("approve");
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
   const { approveTokens, isApproving } = useTokenApproval();
   const { exchangeItem, isExchanging } = useExchange();
 
   const handleApprove = async () => {
     const success = await approveTokens(item.price);
     if (success) {
-      setStep("exchange");
+      setStep("shipping");
       toast({
         title: "Approval successful",
-        description: "You can now exchange the item",
+        description: "Please provide your shipping information",
       });
     }
   };
 
+  const handleShippingSubmit = (data: ShippingInfo) => {
+    setShippingInfo(data);
+    setStep("exchange");
+  };
+
   const handleExchange = async () => {
+    if (!shippingInfo) {
+      toast({
+        title: "Error",
+        description: "Shipping information is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const hash = await exchangeItem(item.id);
     if (hash) {
       setTxHash(hash);
+      
+      // Send WhatsApp notification
+      try {
+        await supabase.functions.invoke('send-whatsapp-order', {
+          body: {
+            merchantWhatsApp: item.merchantWhatsApp,
+            itemName: item.name,
+            itemPrice: formatUnits(item.price, 9),
+            shippingInfo,
+            txHash: hash,
+          },
+        });
+      } catch (error) {
+        console.error('Failed to send WhatsApp notification:', error);
+      }
+
       setStep("receipt");
       toast({
         title: "Exchange successful!",
@@ -48,8 +81,19 @@ export const ItemDetailsModal = ({ item, open, onClose }: ItemDetailsModalProps)
   const handleClose = () => {
     setStep("approve");
     setTxHash(null);
+    setShippingInfo(null);
     onClose();
   };
+
+  if (step === "shipping") {
+    return (
+      <ShippingFormModal
+        open={open}
+        onClose={() => setStep("approve")}
+        onSubmit={handleShippingSubmit}
+      />
+    );
+  }
 
   if (step === "receipt" && txHash) {
     return (

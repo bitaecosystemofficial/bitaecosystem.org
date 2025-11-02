@@ -20,6 +20,7 @@ contract ExchangeShop {
         bool active;
         string category;
         string imageUrl;
+        string merchantWhatsApp;
     }
 
     struct Exchange {
@@ -75,7 +76,8 @@ contract ExchangeShop {
         uint256 price,
         uint256 stock,
         string memory category,
-        string memory imageUrl
+        string memory imageUrl,
+        string memory merchantWhatsApp
     ) external {
         require(price > 0, "Price must be greater than 0");
         require(stock > 0, "Stock must be greater than 0");
@@ -89,7 +91,8 @@ contract ExchangeShop {
             stock: stock,
             active: true,
             category: category,
-            imageUrl: imageUrl
+            imageUrl: imageUrl,
+            merchantWhatsApp: merchantWhatsApp
         });
 
         emit ItemListed(nextItemId, name, price, msg.sender, stock);
