@@ -8,13 +8,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { useAccount, useDisconnect } from 'wagmi';
 import bitAccessLogo from '@/assets/bit-access-logo.png';
+import TokenomicsSimplified from '@/pages/TokenomicsSimplified';
+import Roadmap from '@/pages/Roadmap';
+import HowItWorks from '@/pages/HowItWorks';
+import Whitepaper from '@/pages/Whitepaper';
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openModal, setOpenModal] = useState<string | null>(null);
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard';
   const navigate = useNavigate();
@@ -54,6 +71,26 @@ const Navigation = () => {
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  const handleModalOpen = (modalName: string) => {
+    setOpenModal(modalName);
+    setIsMobileMenuOpen(false);
+  };
+
+  const renderModalContent = () => {
+    switch(openModal) {
+      case 'tokenomics-simplified':
+        return <TokenomicsSimplified />;
+      case 'roadmap':
+        return <Roadmap />;
+      case 'howitworks':
+        return <HowItWorks />;
+      case 'whitepaper':
+        return <Whitepaper />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -105,15 +142,12 @@ const Navigation = () => {
                   <div className="grid grid-cols-2 gap-3">
                     {mobileOnlyLinks.map((link) => {
                       const Icon = link.icon;
+                      const modalKey = link.path.replace('/', '').replace(/how-it-works/g, 'howitworks');
                       return (
-                        <Link
+                        <button
                           key={link.path}
-                          to={link.path}
-                          className={`flex flex-col items-center gap-2 p-4 rounded-lg border transition-all hover:border-primary/50 hover:bg-primary/5 ${
-                            location.pathname === link.path 
-                              ? 'border-primary bg-primary/10' 
-                              : 'border-border bg-card/50'
-                          }`}
+                          onClick={() => handleModalOpen(modalKey)}
+                          className="flex flex-col items-center gap-2 p-4 rounded-lg border transition-all hover:border-primary/50 hover:bg-primary/5 border-border bg-card/50"
                         >
                           <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
                             <Icon className="w-6 h-6 text-primary" />
@@ -121,7 +155,7 @@ const Navigation = () => {
                           <span className="text-xs font-medium text-center leading-tight">
                             {link.label}
                           </span>
-                        </Link>
+                        </button>
                       );
                     })}
                   </div>
@@ -172,20 +206,18 @@ const Navigation = () => {
                     </div>
                     {mobileOnlyLinks.map((link) => {
                       const Icon = link.icon;
+                      const modalKey = link.path.replace('/', '').replace(/how-it-works/g, 'howitworks');
                       return (
                         <DropdownMenuItem key={link.path} asChild>
-                          <Link 
-                            to={link.path} 
-                            className={`cursor-pointer flex items-center gap-3 p-3 ${
-                              location.pathname === link.path ? 'bg-primary/10 text-primary' : ''
-                            }`}
-                            onClick={() => setIsMobileMenuOpen(false)}
+                          <button 
+                            onClick={() => handleModalOpen(modalKey)}
+                            className="cursor-pointer flex items-center gap-3 p-3 w-full text-left"
                           >
                             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                               <Icon className="w-4 h-4 text-primary" />
                             </div>
                             <span className="text-sm font-medium">{link.label}</span>
-                          </Link>
+                          </button>
                         </DropdownMenuItem>
                       );
                     })}
@@ -229,6 +261,32 @@ const Navigation = () => {
         </div>
 
       </div>
+
+      {/* Desktop Dialog */}
+      <Dialog open={openModal !== null && window.innerWidth >= 768} onOpenChange={() => setOpenModal(null)}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          {renderModalContent()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Mobile Sheet */}
+      <Sheet open={openModal !== null && window.innerWidth < 768} onOpenChange={() => setOpenModal(null)}>
+        <SheetContent side="bottom" className="h-[95vh] overflow-y-auto p-0">
+          <div className="sticky top-0 bg-background z-10 border-b px-6 py-4">
+            <SheetHeader>
+              <SheetTitle>
+                {openModal === 'tokenomics-simplified' && 'Tokenomics Simplified'}
+                {openModal === 'roadmap' && 'Roadmap'}
+                {openModal === 'howitworks' && 'How It Works'}
+                {openModal === 'whitepaper' && 'Whitepaper'}
+              </SheetTitle>
+            </SheetHeader>
+          </div>
+          <div className="px-6 pb-6">
+            {renderModalContent()}
+          </div>
+        </SheetContent>
+      </Sheet>
     </nav>
   );
 };
