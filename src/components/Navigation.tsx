@@ -90,6 +90,45 @@ const Navigation = () => {
 
           {/* Desktop - Connect Wallet */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Resources Menu - Only shown when connected */}
+            {isConnected && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="relative">
+                    <Menu className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-96 bg-card/95 backdrop-blur-sm z-[100] p-4">
+                  <div className="mb-3">
+                    <h3 className="text-sm font-semibold text-muted-foreground">Resources</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {mobileOnlyLinks.map((link) => {
+                      const Icon = link.icon;
+                      return (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          className={`flex flex-col items-center gap-2 p-4 rounded-lg border transition-all hover:border-primary/50 hover:bg-primary/5 ${
+                            location.pathname === link.path 
+                              ? 'border-primary bg-primary/10' 
+                              : 'border-border bg-card/50'
+                          }`}
+                        >
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Icon className="w-6 h-6 text-primary" />
+                          </div>
+                          <span className="text-xs font-medium text-center leading-tight">
+                            {link.label}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            
             <Button
               onClick={() => open()}
               className="bg-primary text-primary-foreground hover:bg-primary/90 font-mono"
