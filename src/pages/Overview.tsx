@@ -3,23 +3,27 @@ import { Wallet, Award, Lock, Users, ShoppingCart, Gift, TrendingUp, Repeat, Cro
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import usdtLogo from '@/assets/usdt-logo.png';
 import usdcLogo from '@/assets/usdc-logo.png';
+import aboutUsImage from '@/assets/about-us-image.png';
 
 const Overview = () => {
   const sections = [
     {
       icon: Wallet,
+      image: aboutUsImage,
       title: 'About Us',
       content:
         'Bit Access (BIT) is a revolutionary reward token that incentivizes Web3 adoption. Merchants accept USDT/USDC stablecoins for payments, while customers earn BIT tokens as rewards, creating a win-win ecosystem for all participants.',
     },
     {
       icon: Users,
+      image: aboutUsImage,
       title: 'Mission & Vision',
       content:
         'Our mission is to bridge traditional commerce with Web3 through stablecoin payments and reward tokens. We envision a future where merchants benefit from instant settlements and customers earn valuable rewards with every purchase.',
     },
     {
       icon: Award,
+      image: aboutUsImage,
       title: 'Core Values',
       content: '',
       values: [
@@ -102,13 +106,13 @@ const Overview = () => {
               <Card className="bg-card border-border overflow-hidden">
                 <CardContent className="p-0">
                   <div className={`grid md:grid-cols-2 gap-0 ${index % 2 === 0 ? '' : 'md:flex-row-reverse'}`}>
-                    {/* Image Placeholder */}
-                    <div className={`relative h-64 md:h-auto bg-gradient-to-br ${
-                      index === 0 ? 'from-primary/20 to-primary/5' : 
-                      index === 1 ? 'from-secondary/30 to-secondary/10' : 
-                      'from-accent/20 to-accent/10'
-                    } flex items-center justify-center ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}>
-                      <section.icon className="w-24 h-24 text-primary/40" />
+                    {/* Image */}
+                    <div className={`relative h-64 md:h-auto overflow-hidden ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}>
+                      <img 
+                        src={section.image} 
+                        alt={section.title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
 
                     {/* Content */}
