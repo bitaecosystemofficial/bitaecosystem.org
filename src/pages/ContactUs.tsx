@@ -199,34 +199,6 @@ const ContactUs = () => {
                 </p>
               </CardContent>
             </Card>
-
-            <Card className="bg-gradient-to-br from-primary/10 to-accent/10">
-              <CardHeader>
-                <CardTitle>Community</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Join our growing community for the latest updates and discussions
-                </p>
-                <div className="flex gap-3">
-                  <Button variant="outline" size="icon" asChild>
-                    <a href="https://twitter.com/BitAccess" target="_blank" rel="noopener noreferrer">
-                      <Twitter className="w-4 h-4" />
-                    </a>
-                  </Button>
-                  <Button variant="outline" size="icon" asChild>
-                    <a href="https://github.com/BitAccess" target="_blank" rel="noopener noreferrer">
-                      <Github className="w-4 h-4" />
-                    </a>
-                  </Button>
-                  <Button variant="outline" size="icon" asChild>
-                    <a href="https://t.me/BitAccessCommunity" target="_blank" rel="noopener noreferrer">
-                      <MessageSquare className="w-4 h-4" />
-                    </a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </motion.div>
         </div>
       </div>
