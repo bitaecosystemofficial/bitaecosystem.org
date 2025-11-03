@@ -360,6 +360,33 @@ const CommunityTab = () => {
   const completedTasks = tasks.filter(t => t.completed).length;
   const progressPercentage = (completedTasks / tasks.length) * 100;
 
+  // Helper function to check if a task should be unlocked based on previous task completion
+  const isTaskUnlocked = (task: Task, allTasks: Task[]) => {
+    // For check-in category, implement sequential unlocking
+    if (task.category === 'check-in') {
+      const checkInTasks = allTasks
+        .filter(t => t.category === 'check-in')
+        .sort((a, b) => {
+          // Extract day number from task id (e.g., "day-1" -> 1)
+          const dayA = parseInt(a.id.match(/\d+/)?.[0] || '0');
+          const dayB = parseInt(b.id.match(/\d+/)?.[0] || '0');
+          return dayA - dayB;
+        });
+
+      const currentTaskIndex = checkInTasks.findIndex(t => t.id === task.id);
+      
+      // First task is always unlocked
+      if (currentTaskIndex === 0) return true;
+      
+      // Check if previous task is completed
+      const previousTask = checkInTasks[currentTaskIndex - 1];
+      return previousTask?.completed || false;
+    }
+    
+    // For other categories, use the original activation date logic
+    return !task.activationDate || Date.now() >= task.activationDate;
+  };
+
   // TaskCard component to handle individual tasks without hook violations
   const TaskCard = ({ task, TaskIcon, isLinkActive, onTaskAction }: {
     task: Task;
@@ -542,7 +569,7 @@ const CommunityTab = () => {
                 >
                   {categoryTasks.map((task) => {
                     const TaskIcon = task.icon;
-                    const isLinkActive = !task.activationDate || Date.now() >= task.activationDate;
+                    const isLinkActive = isTaskUnlocked(task, tasks);
                     
                     return (
                       <div key={task.id} className="flex-shrink-0 w-[85vw] snap-center">
@@ -561,7 +588,7 @@ const CommunityTab = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-4">
                   {categoryTasks.map((task) => {
                     const TaskIcon = task.icon;
-                    const isLinkActive = !task.activationDate || Date.now() >= task.activationDate;
+                    const isLinkActive = isTaskUnlocked(task, tasks);
                     
                     return (
                       <TaskCard 
@@ -579,7 +606,7 @@ const CommunityTab = () => {
                 <div className="space-y-4">
                   {categoryTasks.map((task) => {
                     const TaskIcon = task.icon;
-                    const isLinkActive = !task.activationDate || Date.now() >= task.activationDate;
+                    const isLinkActive = isTaskUnlocked(task, tasks);
                     
                     return (
                       <TaskCard 
