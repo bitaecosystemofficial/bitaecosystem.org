@@ -47,6 +47,7 @@ interface Task {
   inviteCount?: string;
   activationDate?: number; // Timestamp for when link becomes active
   linkVisited?: boolean; // Track if link was visited
+  unlockTime?: number; // Timestamp when task unlocks (for check-ins)
 }
 
 const CommunityTab = () => {
@@ -137,7 +138,7 @@ const CommunityTab = () => {
             abi: CONTRACT_ABIS.BITCommunityTasks as any,
             functionName: 'getUserTaskInfo',
             args: [address, taskId] as any,
-          } as any) : [false, 0, false, 0];
+          } as any) : [false, 0, false, 0, 0];
 
           const categoryIcons: Record<string, any> = {
             'check-in': Calendar,
@@ -157,6 +158,7 @@ const CommunityTab = () => {
 
           const taskCategory = (taskInfo[4] || 'social') as any;
           const activationTimestamp = Number(taskInfo[2] || 0);
+          const unlockTimestamp = Number(userTaskInfo[4] || 0);
           
           return {
             id: taskId,
@@ -169,6 +171,7 @@ const CommunityTab = () => {
             completed: userTaskInfo[0] || false,
             linkVisited: userTaskInfo[2] || false,
             activationDate: activationTimestamp > 0 ? activationTimestamp * 1000 : undefined,
+            unlockTime: unlockTimestamp > 0 ? unlockTimestamp * 1000 : undefined,
           };
         } catch (error) {
           console.error(`Error fetching task ${taskId}:`, error);
@@ -188,8 +191,18 @@ const CommunityTab = () => {
     const task = tasks.find(t => t.id === taskId);
     if (!task || task.completed) return;
 
-    // Check if task has activation date and if it's active
-    if (task.activationDate && Date.now() < task.activationDate) {
+    // For check-in tasks, check unlock time
+    if (task.category === 'check-in' && task.unlockTime && Date.now() < task.unlockTime) {
+      toast({
+        title: 'Task Not Unlocked Yet',
+        description: 'Complete the previous day first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // For other tasks, check activation date
+    if (task.category !== 'check-in' && task.activationDate && Date.now() < task.activationDate) {
       toast({
         title: 'Link Not Active Yet',
         description: 'This link will be available soon. Please check the timer.',
@@ -360,6 +373,44 @@ const CommunityTab = () => {
   const completedTasks = tasks.filter(t => t.completed).length;
   const progressPercentage = (completedTasks / tasks.length) * 100;
 
+  const handleClaimCategoryRewards = async (category: string) => {
+    if (!isBSCNetwork) {
+      try {
+        await switchChain({ chainId: SUPPORTED_CHAINS.BSC_MAINNET });
+      } catch (error) {
+        toast({
+          title: 'Network Switch Required',
+          description: 'Please switch to BSC network to claim rewards',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    try {
+      await writeContract({
+        address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
+        abi: CONTRACT_ABIS.BITCommunityTasks as any,
+        functionName: 'claimCategoryRewards',
+        args: [category] as any,
+      } as any);
+
+      toast({
+        title: 'Rewards Claimed! 🎉',
+        description: `Your ${category} rewards have been sent to your wallet!`,
+      });
+
+      // Refetch tasks to update rewards
+      refetchTaskIds();
+    } catch (error) {
+      toast({
+        title: 'Claim Failed',
+        description: 'Failed to claim rewards from smart contract',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // TaskCard component to handle individual tasks without hook violations
   const TaskCard = ({ task, TaskIcon, isLinkActive, onTaskAction }: {
     task: Task;
@@ -367,7 +418,11 @@ const CommunityTab = () => {
     isLinkActive: boolean;
     onTaskAction: (taskId: string) => void;
   }) => {
-    const timeLeft = task.activationDate ? useCountdown(task.activationDate) : null;
+    // For check-in tasks, use unlock time; for others, use activation date
+    const countdownTime = task.category === 'check-in' && task.unlockTime 
+      ? task.unlockTime 
+      : task.activationDate || 0;
+    const timeLeft = countdownTime > 0 ? useCountdown(countdownTime) : null;
     
     return (
       <motion.div
@@ -518,19 +573,33 @@ const CommunityTab = () => {
       {categories.map((category) => {
         const categoryTasks = tasks.filter(t => t.category === category.id);
         const CategoryIcon = category.icon;
+        const allCategoryTasksCompleted = categoryTasks.length > 0 && categoryTasks.every(t => t.completed);
 
         return (
           <Card key={category.id} className="bg-card/50 backdrop-blur-sm border-border/50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${category.bgColor}`}>
-                  <CategoryIcon className={`w-6 h-6 ${category.color}`} />
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-3 mb-2">
+                    <div className={`p-2 rounded-lg ${category.bgColor}`}>
+                      <CategoryIcon className={`w-6 h-6 ${category.color}`} />
+                    </div>
+                    {category.name}
+                  </CardTitle>
+                  <CardDescription>
+                    {category.description} • {categoryTasks.filter(t => t.completed).length} of {categoryTasks.length} completed
+                  </CardDescription>
                 </div>
-                {category.name}
-              </CardTitle>
-              <CardDescription>
-                {category.description} • {categoryTasks.filter(t => t.completed).length} of {categoryTasks.length} completed
-              </CardDescription>
+                {allCategoryTasksCompleted && address && (
+                  <Button
+                    onClick={() => handleClaimCategoryRewards(category.id)}
+                    className="bg-green-500 hover:bg-green-600"
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Claim Rewards
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {category.id === 'check-in' && isMobile ? (
@@ -542,7 +611,10 @@ const CommunityTab = () => {
                 >
                   {categoryTasks.map((task) => {
                     const TaskIcon = task.icon;
-                    const isLinkActive = !task.activationDate || Date.now() >= task.activationDate;
+                    // For check-in, check unlock time; for others, activation date
+                    const isLinkActive = task.category === 'check-in' 
+                      ? (!task.unlockTime || Date.now() >= task.unlockTime)
+                      : (!task.activationDate || Date.now() >= task.activationDate);
                     
                     return (
                       <div key={task.id} className="flex-shrink-0 w-[85vw] snap-center">
@@ -561,7 +633,10 @@ const CommunityTab = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-4">
                   {categoryTasks.map((task) => {
                     const TaskIcon = task.icon;
-                    const isLinkActive = !task.activationDate || Date.now() >= task.activationDate;
+                    // For check-in, check unlock time; for others, activation date
+                    const isLinkActive = task.category === 'check-in' 
+                      ? (!task.unlockTime || Date.now() >= task.unlockTime)
+                      : (!task.activationDate || Date.now() >= task.activationDate);
                     
                     return (
                       <TaskCard 
@@ -579,6 +654,7 @@ const CommunityTab = () => {
                 <div className="space-y-4">
                   {categoryTasks.map((task) => {
                     const TaskIcon = task.icon;
+                    // For other categories, use activation date
                     const isLinkActive = !task.activationDate || Date.now() >= task.activationDate;
                     
                     return (

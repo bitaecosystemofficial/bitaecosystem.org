@@ -92,6 +92,7 @@ contract BITCommunityTasks is Ownable, ReentrancyGuard {
         uint256 completedAt;
         bool linkVisited;
         uint256 linkVisitedAt;
+        uint256 unlockTime; // Time when task becomes available (for check-ins)
     }
     
     // Mapping: taskId => Task
@@ -103,7 +104,7 @@ contract BITCommunityTasks is Ownable, ReentrancyGuard {
     // Mapping: user => total completed tasks
     mapping(address => uint256) public userCompletedTasks;
     
-    // Mapping: user => total rewards earned
+    // Mapping: user => total rewards earned (historical)
     mapping(address => uint256) public userTotalRewards;
     
     // Mapping: user => check-in streak
@@ -112,6 +113,12 @@ contract BITCommunityTasks is Ownable, ReentrancyGuard {
     // Mapping: user => last check-in timestamp
     mapping(address => uint256) public userLastCheckIn;
     
+    // Mapping: user => category => pending rewards
+    mapping(address => mapping(string => uint256)) public userCategoryRewards;
+    
+    // Mapping: user => category => completed tasks count
+    mapping(address => mapping(string => uint256)) public userCategoryCompletedTasks;
+    
     // Array of all task IDs
     string[] public taskIds;
     
@@ -119,9 +126,10 @@ contract BITCommunityTasks is Ownable, ReentrancyGuard {
     event TaskCompleted(address indexed user, string taskId, uint256 reward);
     event LinkVisited(address indexed user, string taskId, uint256 timestamp);
     event CheckInStreakUpdated(address indexed user, uint256 newStreak);
-    event RewardsClaimed(address indexed user, uint256 amount);
+    event CategoryRewardsClaimed(address indexed user, string category, uint256 amount);
     event BITTokenUpdated(address indexed tokenAddress);
     event RewardsToggled(bool enabled);
+    event TaskUnlocked(address indexed user, string taskId, uint256 unlockTime);
     
     constructor(address _bitToken) {
         require(_bitToken != address(0), "Invalid BIT token address");
@@ -178,8 +186,27 @@ contract BITCommunityTasks is Ownable, ReentrancyGuard {
     function markLinkVisited(string memory _taskId) external nonReentrant {
         Task memory task = tasks[_taskId];
         require(task.isActive, "Task is not active");
-        require(block.timestamp >= task.activationDate, "Task not yet active");
         require(!userTasks[msg.sender][_taskId].completed, "Task already completed");
+        
+        // Check unlock status for check-in tasks
+        if (keccak256(bytes(task.category)) == keccak256(bytes("check-in"))) {
+            UserTask storage userTask = userTasks[msg.sender][_taskId];
+            if (userTask.unlockTime == 0) {
+                require(
+                    keccak256(bytes(_taskId)) == keccak256(bytes("day-1")),
+                    "Must start with Day 1"
+                );
+                userTask.unlockTime = block.timestamp;
+            } else {
+                require(block.timestamp >= userTask.unlockTime, "Task not yet unlocked");
+            }
+        } else {
+            // For other categories, check activation date
+            require(
+                task.activationDate == 0 || block.timestamp >= task.activationDate,
+                "Task not yet active"
+            );
+        }
         
         userTasks[msg.sender][_taskId].linkVisited = true;
         userTasks[msg.sender][_taskId].linkVisitedAt = block.timestamp;
@@ -188,55 +215,120 @@ contract BITCommunityTasks is Ownable, ReentrancyGuard {
     }
     
     function completeTask(string memory _taskId) external nonReentrant {
-        Task memory task = tasks[_taskId];
+        Task storage task = tasks[_taskId];
         require(task.isActive, "Task is not active");
-        require(block.timestamp >= task.activationDate, "Task not yet active");
         require(!userTasks[msg.sender][_taskId].completed, "Task already completed");
         
-        // Handle check-in streak logic
+        UserTask storage userTask = userTasks[msg.sender][_taskId];
+        
+        // Check unlock status
         if (keccak256(bytes(task.category)) == keccak256(bytes("check-in"))) {
-            uint256 lastCheckIn = userLastCheckIn[msg.sender];
-            if (lastCheckIn > 0) {
-                uint256 daysSinceLastCheckIn = (block.timestamp - lastCheckIn) / 1 days;
-                if (daysSinceLastCheckIn <= 1) {
-                    userCheckInStreak[msg.sender]++;
-                } else {
-                    userCheckInStreak[msg.sender] = 1;
-                }
+            // For check-in tasks, verify unlock time
+            if (userTask.unlockTime == 0) {
+                // First check-in for this user
+                require(
+                    keccak256(bytes(_taskId)) == keccak256(bytes("day-1")),
+                    "Must complete Day 1 first"
+                );
+                userTask.unlockTime = block.timestamp;
             } else {
-                userCheckInStreak[msg.sender] = 1;
+                require(block.timestamp >= userTask.unlockTime, "Task not yet unlocked");
             }
+            
+            // Update check-in streak
+            userCheckInStreak[msg.sender]++;
             userLastCheckIn[msg.sender] = block.timestamp;
             emit CheckInStreakUpdated(msg.sender, userCheckInStreak[msg.sender]);
+            
+            // Unlock next check-in task (24 hours from now)
+            string memory nextTaskId = getNextCheckInTask(_taskId);
+            if (bytes(nextTaskId).length > 0) {
+                userTasks[msg.sender][nextTaskId].unlockTime = block.timestamp + 24 hours;
+                emit TaskUnlocked(msg.sender, nextTaskId, block.timestamp + 24 hours);
+            }
+        } else {
+            // For other categories, check activation date
+            require(
+                task.activationDate == 0 || block.timestamp >= task.activationDate,
+                "Task not yet available"
+            );
         }
         
-        userTasks[msg.sender][_taskId].completed = true;
-        userTasks[msg.sender][_taskId].completedAt = block.timestamp;
-        
+        // Mark task as completed
+        userTask.completed = true;
+        userTask.completedAt = block.timestamp;
         userCompletedTasks[msg.sender]++;
+        userCategoryCompletedTasks[msg.sender][task.category]++;
+        
+        // Add reward to category pending rewards (not auto-transfer)
+        userCategoryRewards[msg.sender][task.category] += task.reward;
         userTotalRewards[msg.sender] += task.reward;
         
         emit TaskCompleted(msg.sender, _taskId, task.reward);
+    }
+    
+    // Helper function to get next check-in task ID
+    function getNextCheckInTask(string memory _currentTaskId) internal pure returns (string memory) {
+        bytes memory taskIdBytes = bytes(_currentTaskId);
         
-        // Auto-transfer rewards if enabled
-        if (rewardsEnabled) {
-            _claimReward(task.reward);
+        // Extract day number from "day-X" format
+        uint256 dayNumber = 0;
+        bool foundDash = false;
+        for (uint256 i = 0; i < taskIdBytes.length; i++) {
+            if (taskIdBytes[i] == "-") {
+                foundDash = true;
+                continue;
+            }
+            if (foundDash && taskIdBytes[i] >= "0" && taskIdBytes[i] <= "9") {
+                dayNumber = dayNumber * 10 + uint8(taskIdBytes[i]) - 48;
+            }
+        }
+        
+        if (dayNumber >= 30) {
+            return ""; // No next task after day 30
+        }
+        
+        // Return next day task ID
+        dayNumber++;
+        if (dayNumber < 10) {
+            return string(abi.encodePacked("day-", uint8(48 + dayNumber)));
+        } else {
+            uint8 tens = uint8(48 + (dayNumber / 10));
+            uint8 ones = uint8(48 + (dayNumber % 10));
+            return string(abi.encodePacked("day-", tens, ones));
         }
     }
     
-    function claimRewards() external nonReentrant {
+    function claimCategoryRewards(string memory _category) external nonReentrant {
         require(rewardsEnabled, "Rewards are not enabled");
-        uint256 pendingRewards = userTotalRewards[msg.sender];
+        require(isCategoryComplete(msg.sender, _category), "Category not complete");
+        
+        uint256 pendingRewards = userCategoryRewards[msg.sender][_category];
         require(pendingRewards > 0, "No rewards to claim");
         
+        userCategoryRewards[msg.sender][_category] = 0;
         _claimReward(pendingRewards);
+        
+        emit CategoryRewardsClaimed(msg.sender, _category, pendingRewards);
+    }
+    
+    function isCategoryComplete(address _user, string memory _category) public view returns (bool) {
+        uint256 totalTasks = 0;
+        uint256 completedTasks = userCategoryCompletedTasks[_user][_category];
+        
+        // Count total tasks in category
+        for (uint256 i = 0; i < taskIds.length; i++) {
+            if (keccak256(bytes(tasks[taskIds[i]].category)) == keccak256(bytes(_category))) {
+                totalTasks++;
+            }
+        }
+        
+        return completedTasks == totalTasks && totalTasks > 0;
     }
     
     function _claimReward(uint256 amount) internal {
         require(bitToken.balanceOf(address(this)) >= amount, "Insufficient contract balance");
         require(bitToken.transfer(msg.sender, amount), "Token transfer failed");
-        
-        emit RewardsClaimed(msg.sender, amount);
     }
     
     function isTaskCompleted(address _user, string memory _taskId) external view returns (bool) {
@@ -250,14 +342,21 @@ contract BITCommunityTasks is Ownable, ReentrancyGuard {
     function getUserTaskInfo(address _user, string memory _taskId) 
         external 
         view 
-        returns (bool completed, uint256 completedAt, bool linkVisited, uint256 linkVisitedAt) 
+        returns (
+            bool completed,
+            uint256 completedAt,
+            bool linkVisited,
+            uint256 linkVisitedAt,
+            uint256 unlockTime
+        ) 
     {
         UserTask memory userTask = userTasks[_user][_taskId];
         return (
             userTask.completed,
             userTask.completedAt,
             userTask.linkVisited,
-            userTask.linkVisitedAt
+            userTask.linkVisitedAt,
+            userTask.unlockTime
         );
     }
     
@@ -286,6 +385,14 @@ contract BITCommunityTasks is Ownable, ReentrancyGuard {
             userTotalRewards[_user],
             userCheckInStreak[_user]
         );
+    }
+    
+    function getCategoryPendingRewards(address _user, string memory _category) 
+        external 
+        view 
+        returns (uint256) 
+    {
+        return userCategoryRewards[_user][_category];
     }
     
     function getAllTaskIds() external view returns (string[] memory) {
