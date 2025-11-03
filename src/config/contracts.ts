@@ -1,7 +1,6 @@
 // ABI imports
 import BITTokenPurchaseABI from "@/contracts/abis/BITTokenPurchase.json";
 import BITStakingABI from "@/contracts/abis/BITStaking.json";
-import BITCommunityTasksABI from "@/contracts/abis/BITCommunityTasks.json";
 import ExchangeShopABI from "@/contracts/abis/ExchangeShop.json";
 import BITClaimAirdropABI from "@/contracts/abis/BITClaimAirdrop.json";
 import ERC20ABI from "@/contracts/abis/ERC20.json";
@@ -13,9 +12,6 @@ export const CONTRACT_ADDRESSES = {
 
   // BIT Staking Contract
   BIT_STAKING: "0x1D361114074ED04e4BdC763AbF5c6218aB0e178F" as `0x${string}`, // Replace with deployed address
-
-  // BIT Community Tasks Contract
-  BIT_COMMUNITY_TASKS: "0xB1f710ddA249a0DbFBD342A3a6f416651B04D511" as `0x${string}`, // DEPLOY THIS CONTRACT AND UPDATE ADDRESS
 
   // Exchange Shop Contract
   EXCHANGE_SHOP: "0xAE274E1dB3ac615CCf1E449aF7893612f5aE50C8" as `0x${string}`, // DEPLOY THIS CONTRACT AND UPDATE ADDRESS
@@ -35,7 +31,6 @@ export const CONTRACT_ADDRESSES = {
 export const CONTRACT_ABIS = {
   BIT_PURCHASE: BITTokenPurchaseABI,
   BIT_STAKING: BITStakingABI,
-  BITCommunityTasks: BITCommunityTasksABI,
   EXCHANGE_SHOP: ExchangeShopABI,
   CLAIM_AIRDROP: BITClaimAirdropABI,
   ERC20: ERC20ABI,
