@@ -3,6 +3,7 @@ import BITTokenPurchaseABI from "@/contracts/abis/BITTokenPurchase.json";
 import BITStakingABI from "@/contracts/abis/BITStaking.json";
 import BITCommunityTasksABI from "@/contracts/abis/BITCommunityTasks.json";
 import ExchangeShopABI from "@/contracts/abis/ExchangeShop.json";
+import BITClaimAirdropABI from "@/contracts/abis/BITClaimAirdrop.json";
 import ERC20ABI from "@/contracts/abis/ERC20.json";
 
 // Smart Contract Addresses on BSC Network
@@ -19,6 +20,9 @@ export const CONTRACT_ADDRESSES = {
   // Exchange Shop Contract
   EXCHANGE_SHOP: "0xAE274E1dB3ac615CCf1E449aF7893612f5aE50C8" as `0x${string}`, // DEPLOY THIS CONTRACT AND UPDATE ADDRESS
 
+  // Claim Airdrop Contract
+  CLAIM_AIRDROP: "0x0000000000000000000000000000000000000000" as `0x${string}`, // DEPLOY THIS CONTRACT AND UPDATE ADDRESS
+
   // Token Addresses on BSC
   BIT_TOKEN: "0xd3bDe17EbD27739cF5505Cd58Ecf31cB628E469c" as `0x${string}`, // Replace with BIT token address
   USDT_TOKEN: "0x55d398326f99059fF775485246999027B3197955" as `0x${string}`, // USDT on BSC
@@ -33,6 +37,7 @@ export const CONTRACT_ABIS = {
   BIT_STAKING: BITStakingABI,
   BITCommunityTasks: BITCommunityTasksABI,
   EXCHANGE_SHOP: ExchangeShopABI,
+  CLAIM_AIRDROP: BITClaimAirdropABI,
   ERC20: ERC20ABI,
 };
 
