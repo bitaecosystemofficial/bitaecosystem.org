@@ -86,6 +86,7 @@ const CommunityTab = () => {
   const [checkInStreak, setCheckInStreak] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Check if on BSC network
   const isBSCNetwork = chainId === SUPPORTED_CHAINS.BSC_MAINNET || chainId === SUPPORTED_CHAINS.BSC_TESTNET;
@@ -98,7 +99,7 @@ const CommunityTab = () => {
   });
 
   // Hardcoded task IDs (no dynamic array in gas-optimized contract)
-  const [allTaskIds, setAllTaskIds] = useState<string[]>([
+  const allTaskIds = [
     // Check-in tasks (Day 1-30)
     ...Array.from({ length: 30 }, (_, i) => `day-${i + 1}`),
     // Social tasks
@@ -109,23 +110,27 @@ const CommunityTab = () => {
     'webinar-1', 'webinar-2',
     // Forum tasks
     'forum-1', 'forum-2',
-  ]);
+  ];
 
   // Fetch user stats from blockchain
-  const { data: userStats } = useReadContract({
+  const { data: userStats, refetch: refetchUserStats } = useReadContract({
     address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
     abi: CONTRACT_ABIS.BITCommunityTasks as any,
     functionName: 'getUserStats',
     args: address ? [address] : undefined,
     query: {
       enabled: !!address && isBSCNetwork,
+      refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
     },
   });
 
   // Update local state from blockchain data (uint16 values)
   useEffect(() => {
     if (userStats && Array.isArray(userStats)) {
-      setCheckInStreak(Number(userStats[1])); // checkInStreak is second return value
+      const completedTasks = Number(userStats[0]);
+      const streak = Number(userStats[1]);
+      setCheckInStreak(streak);
+      setTotalPoints(completedTasks * 10); // Approximate, real total is in contract
     }
   }, [userStats]);
 
@@ -148,6 +153,8 @@ const CommunityTab = () => {
         setLoading(false);
         return;
       }
+
+      setLoading(true);
 
       const taskPromises = allTaskIds.map(async (taskId) => {
         try {
@@ -199,10 +206,25 @@ const CommunityTab = () => {
           const activationTimestamp = Number(activationDate);
           const unlockTimestamp = Number(unlockTime);
           
+          // Generate better titles and descriptions for check-in tasks
+          let title = taskId.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          let description = `Complete this ${taskCategory} task to earn BIT tokens`;
+          
+          if (taskCategory === 'check-in') {
+            const dayNum = parseInt(taskId.replace('day-', ''));
+            title = `Day ${dayNum} Check-In`;
+            description = `Complete your day ${dayNum} check-in to maintain your streak`;
+          }
+          
+          // Skip tasks with zero reward (not created yet)
+          if (Number(reward) === 0) {
+            return null;
+          }
+          
           return {
             id: taskId,
-            title: taskId.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-            description: `Complete this ${taskCategory} task to earn BIT tokens`,
+            title,
+            description,
             reward: parseFloat(formatEther(reward)),
             category: taskCategory as any,
             icon: categoryIcons[taskCategory] || Users,
@@ -224,30 +246,46 @@ const CommunityTab = () => {
     };
 
     fetchTasks();
-  }, [allTaskIds, address]);
+    
+    // Set up polling for real-time updates every 10 seconds
+    const interval = setInterval(fetchTasks, 10000);
+    
+    return () => clearInterval(interval);
+  }, [address, refreshTrigger]);
 
   const handleTaskAction = async (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || task.completed) return;
-
-    // For check-in tasks, check unlock time
-    if (task.category === 'check-in' && task.unlockTime && Date.now() < task.unlockTime) {
+    if (!address) {
       toast({
-        title: 'Task Not Unlocked Yet',
-        description: 'Complete the previous day first.',
+        title: 'Wallet Not Connected',
+        description: 'Please connect your wallet to complete tasks',
         variant: 'destructive',
       });
       return;
     }
 
-    // For other tasks, check activation date
-    if (task.category !== 'check-in' && task.activationDate && Date.now() < task.activationDate) {
-      toast({
-        title: 'Link Not Active Yet',
-        description: 'This link will be available soon. Please check the timer.',
-        variant: 'destructive',
-      });
-      return;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || task.completed) return;
+
+    // For check-in tasks, Day 1 is always available, others need unlock time check
+    if (task.category === 'check-in') {
+      if (taskId !== 'day-1' && task.unlockTime && Date.now() < task.unlockTime) {
+        toast({
+          title: 'Task Locked',
+          description: 'Complete the previous day first to unlock this task.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    } else {
+      // For other tasks, check activation date
+      if (task.activationDate && Date.now() < task.activationDate) {
+        toast({
+          title: 'Link Not Active Yet',
+          description: 'This link will be available soon. Please check the timer.',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     // Check if on BSC network
@@ -277,24 +315,23 @@ const CommunityTab = () => {
         // Open link in new tab
         window.open(task.link, '_blank');
         
-        // Mark link as visited locally
-        setTasks(tasks.map(t => 
-          t.id === taskId ? { ...t, linkVisited: true } : t
-        ));
-
         toast({
           title: 'Link Visited',
-          description: 'Your visit has been recorded on the blockchain',
+          description: 'Your visit has been recorded. You can now complete the task.',
         });
+
+        // Refresh tasks to update linkVisited status
+        setRefreshTrigger(prev => prev + 1);
 
         // Auto-complete after visiting the link
         setTimeout(() => {
           completeTask(taskId);
         }, 2000);
-      } catch (error) {
+      } catch (error: any) {
+        console.error('Link visit error:', error);
         toast({
           title: 'Transaction Failed',
-          description: 'Failed to record link visit on blockchain',
+          description: error?.message || 'Failed to record link visit on blockchain',
           variant: 'destructive',
         });
       }
@@ -333,34 +370,23 @@ const CommunityTab = () => {
         args: [stringToBytes32(taskId)] as any,
       } as any);
 
-      // Update local state
-      setTasks(tasks.map(t => 
-        t.id === taskId ? { ...t, completed: true } : t
-      ));
-
-      if (task.category === 'check-in') {
-        const newStreak = checkInStreak + 1;
-        setCheckInStreak(newStreak);
-        
-        if (newStreak === 30) {
-          toast({
-            title: '🎉 30-Day Streak Complete!',
-            description: 'Congratulations! You completed the 30-day check-in challenge!',
-          });
-        }
-      }
-
-      setTotalPoints(prev => prev + task.reward);
-      addBalance(task.reward);
-
       toast({
         title: 'Task Completed! 🎉',
-        description: `You earned ${task.reward} BIT tokens! Recorded on blockchain.`,
+        description: `You earned ${task.reward} BIT tokens! Transaction confirmed on blockchain.`,
       });
-    } catch (error) {
+
+      // Trigger refresh to get updated data from blockchain
+      setRefreshTrigger(prev => prev + 1);
+      refetchUserStats();
+      
+      // Update balance context
+      addBalance(task.reward);
+
+    } catch (error: any) {
+      console.error('Task completion error:', error);
       toast({
         title: 'Transaction Failed',
-        description: 'Failed to complete task on blockchain',
+        description: error?.message || 'Failed to complete task on blockchain',
         variant: 'destructive',
       });
     }
@@ -439,15 +465,17 @@ const CommunityTab = () => {
 
       toast({
         title: 'Rewards Claimed! 🎉',
-        description: `Your ${category} rewards have been sent to your wallet!`,
+        description: `Your ${category} category rewards have been sent to your wallet!`,
       });
 
-      // Force task refresh
-      window.location.reload();
-    } catch (error) {
+      // Trigger data refresh
+      setRefreshTrigger(prev => prev + 1);
+      refetchUserStats();
+    } catch (error: any) {
+      console.error('Claim error:', error);
       toast({
         title: 'Claim Failed',
-        description: 'Failed to claim rewards from smart contract',
+        description: error?.message || 'Failed to claim rewards from smart contract',
         variant: 'destructive',
       });
     }
@@ -644,7 +672,14 @@ const CommunityTab = () => {
               </div>
             </CardHeader>
             <CardContent>
-              {category.id === 'check-in' && isMobile ? (
+              {categoryTasks.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No tasks available in this category yet.</p>
+                  {isOwner && (
+                    <p className="text-sm mt-2">Use the Admin Panel to create tasks.</p>
+                  )}
+                </div>
+              ) : category.id === 'check-in' && isMobile ? (
                 // Mobile: Swipeable horizontal scroll for check-in
                 <div 
                   ref={scrollContainerRef}
@@ -653,10 +688,9 @@ const CommunityTab = () => {
                 >
                   {categoryTasks.map((task) => {
                     const TaskIcon = task.icon;
-                    // For check-in, check unlock time; for others, activation date
-                    const isLinkActive = task.category === 'check-in' 
-                      ? (!task.unlockTime || Date.now() >= task.unlockTime)
-                      : (!task.activationDate || Date.now() >= task.activationDate);
+                    // Day 1 is always unlocked, others need unlock time
+                    const isLinkActive = task.id === 'day-1' || 
+                      (task.unlockTime ? Date.now() >= task.unlockTime : false);
                     
                     return (
                       <div key={task.id} className="flex-shrink-0 w-[85vw] snap-center">
@@ -675,10 +709,9 @@ const CommunityTab = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-4">
                   {categoryTasks.map((task) => {
                     const TaskIcon = task.icon;
-                    // For check-in, check unlock time; for others, activation date
-                    const isLinkActive = task.category === 'check-in' 
-                      ? (!task.unlockTime || Date.now() >= task.unlockTime)
-                      : (!task.activationDate || Date.now() >= task.activationDate);
+                    // Day 1 is always unlocked, others need unlock time
+                    const isLinkActive = task.id === 'day-1' || 
+                      (task.unlockTime ? Date.now() >= task.unlockTime : false);
                     
                     return (
                       <TaskCard 
