@@ -12,6 +12,7 @@ import { ItemDetailsModal } from "./ItemDetailsModal";
 import { ItemAdminPanel } from "./ItemAdminPanel";
 import type { Item } from "@/types/Item";
 import { useIsContractOwner } from "@/hooks/useIsContractOwner";
+import { usePublicClient } from "wagmi";
 
 export const ExchangeShopTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,6 +24,7 @@ export const ExchangeShopTab = () => {
   const { isOwner } = useIsContractOwner();
   const { address } = useAccount();
   const isMobile = useIsMobile();
+  const publicClient = usePublicClient();
 
   // Get total items from smart contract
   const { data: totalItems, isLoading: loadingTotal, refetch: refetchTotal } = useReadContract({
@@ -34,7 +36,7 @@ export const ExchangeShopTab = () => {
   // Load all items from smart contract
   useEffect(() => {
     const loadItemsFromContract = async () => {
-      if (!totalItems) {
+      if (!totalItems || !publicClient) {
         setLoadingItems(false);
         setItems([]);
         return;
@@ -44,50 +46,55 @@ export const ExchangeShopTab = () => {
       const itemsArray: Item[] = [];
       const total = Number(totalItems);
 
-      for (let i = 0; i < total; i++) {
-        try {
-          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/read-contract`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              address: CONTRACT_ADDRESSES.EXCHANGE_SHOP,
-              abi: CONTRACT_ABIS.EXCHANGE_SHOP,
-              functionName: 'getItem',
-              args: [BigInt(i)],
-            }),
-          });
-
-          if (response.ok) {
-            const itemData = await response.json();
-            if (itemData && itemData.data) {
-              const [id, name, description, price, merchant, stock, active, category, imageUrl, merchantWhatsApp] = itemData.data;
-              itemsArray.push({
-                id: Number(id),
-                name,
-                description,
-                price,
-                merchant,
-                stock: Number(stock),
-                active,
-                category,
-                imageUrl,
-                merchantWhatsApp: merchantWhatsApp || "",
-              });
+      try {
+        // Fetch all items in parallel using multicall
+        const results = await Promise.all(
+          Array.from({ length: total }, async (_, i) => {
+            try {
+              const result = await publicClient.readContract({
+                address: CONTRACT_ADDRESSES.EXCHANGE_SHOP,
+                abi: CONTRACT_ABIS.EXCHANGE_SHOP,
+                functionName: "getItem",
+                args: [BigInt(i)],
+              } as any);
+              return { success: true, data: result, index: i };
+            } catch (error) {
+              console.error(`Error loading item ${i}:`, error);
+              return { success: false, data: null, index: i };
             }
-          }
-        } catch (error) {
-          console.error(`Error loading item ${i}:`, error);
-        }
-      }
+          })
+        );
 
-      setItems(itemsArray);
-      setLoadingItems(false);
+        // Parse successful results
+        results.forEach(({ success, data }) => {
+          if (success && data) {
+            const itemData = data as any;
+            itemsArray.push({
+              id: Number(itemData[0]),
+              name: itemData[1],
+              description: itemData[2],
+              price: itemData[3],
+              merchant: itemData[4],
+              stock: Number(itemData[5]),
+              active: itemData[6],
+              category: itemData[7],
+              imageUrl: itemData[8],
+              merchantWhatsApp: itemData[9] || "",
+            });
+          }
+        });
+
+        setItems(itemsArray);
+      } catch (error) {
+        console.error("Error loading items:", error);
+        setItems([]);
+      } finally {
+        setLoadingItems(false);
+      }
     };
 
     loadItemsFromContract();
-  }, [totalItems]);
+  }, [totalItems, publicClient]);
 
   // Refetch items periodically when admin panel is shown
   useEffect(() => {
