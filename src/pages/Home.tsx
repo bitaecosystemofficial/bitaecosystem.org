@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { useNavigate } from "react-router-dom";
 import { useTokenHolders } from "@/hooks/useTokenHolders";
-import heroBg from "@/assets/hero-bg-optimized.jpg";
+import heroBg from "@/assets/dashboard-bg.png";
 import bscLogo from "@/assets/bsc-logo.png";
 import polygonLogo from "@/assets/polygon-logo.png";
 import arbitrumLogo from "@/assets/arbitrum-logo.png";

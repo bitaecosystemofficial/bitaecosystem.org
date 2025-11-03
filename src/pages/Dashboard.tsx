@@ -12,6 +12,7 @@ import ClaimAirdropTab from '@/components/dashboard/ClaimAirdropTab';
 import { ExchangeShopTab } from '@/components/dashboard/ExchangeShopTab';
 import PWAInstallPrompt from '@/components/dashboard/PWAInstallPrompt';
 import { BalanceModal } from '@/components/dashboard/BalanceModal';
+import dashboardBg from '@/assets/dashboard-bg.png';
 
 const Dashboard = () => {
   const { isConnected, address } = useAccount();
@@ -38,9 +39,18 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen pt-24 pb-16 bg-background">
+    <div 
+      className="min-h-screen pt-24 pb-16 bg-background relative"
+      style={{
+        backgroundImage: `url(${dashboardBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      <div className="absolute inset-0 bg-background/85 backdrop-blur-sm" />
       <PWAInstallPrompt />
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 relative z-10">
         <h1 className="text-4xl md:text-5xl font-bold mb-8 text-center bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
           Dashboard
         </h1>
