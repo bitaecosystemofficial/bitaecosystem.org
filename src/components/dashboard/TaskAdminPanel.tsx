@@ -8,24 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { CONTRACT_ADDRESSES, CONTRACT_ABIS } from '@/config/contracts';
 import { Shield, Plus, Trash2 } from 'lucide-react';
-import { parseEther, pad, toHex } from 'viem';
-
-// Helper: Convert string to bytes32
-const stringToBytes32 = (str: string): `0x${string}` => {
-  return pad(toHex(str), { size: 32 }) as `0x${string}`;
-};
-
-// Helper: Convert category string to uint8
-const categoryToUint8 = (category: string): number => {
-  const categoryMap: Record<string, number> = {
-    'check-in': 0,
-    'social': 1,
-    'events': 2,
-    'webinar': 3,
-    'forum': 4,
-  };
-  return categoryMap[category] || 0;
-};
+import { parseEther } from 'viem';
 
 interface TaskInput {
   id: string;
@@ -84,26 +67,13 @@ export function TaskAdminPanel() {
     }
 
     try {
-      // Convert to gas-optimized types
-      const taskIds = validTasks.map(t => stringToBytes32(t.taskId));
-      const rewards = validTasks.map(t => {
-        const rewardBigInt = parseEther(t.reward);
-        // Ensure reward fits in uint88 (max ~309 tokens with 18 decimals)
-        if (rewardBigInt > BigInt("309485009821345068724781055")) {
-          throw new Error("Reward too large for uint88");
-        }
-        return rewardBigInt;
-      });
+      const taskIds = validTasks.map(t => t.taskId);
+      const rewards = validTasks.map(t => parseEther(t.reward));
       const currentTime = Math.floor(Date.now() / 1000);
-      const activationDates = validTasks.map(t => {
-        const timestamp = currentTime + (parseInt(t.activationDays) * 24 * 60 * 60);
-        // Ensure timestamp fits in uint80
-        if (timestamp > 1208925819614629174706175) {
-          throw new Error("Activation date too far in future");
-        }
-        return BigInt(timestamp);
-      });
-      const categories = validTasks.map(t => categoryToUint8(t.category));
+      const activationDates = validTasks.map(t => 
+        currentTime + (parseInt(t.activationDays) * 24 * 60 * 60)
+      );
+      const categories = validTasks.map(t => t.category);
 
       writeContract({
         address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
