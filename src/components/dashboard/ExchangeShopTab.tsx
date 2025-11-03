@@ -192,8 +192,16 @@ export const ExchangeShopTab = () => {
               className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() => setSelectedItem(item)}
             >
-              <div className="aspect-video bg-muted flex items-center justify-center">
-                <Package className="h-12 w-12 text-muted-foreground" />
+              <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
+                {item.imageUrl ? (
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Package className="h-12 w-12 text-muted-foreground" />
+                )}
               </div>
               <CardHeader>
                 <div className="flex items-start justify-between">

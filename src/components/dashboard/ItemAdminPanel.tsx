@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Shield, Plus, Loader2 } from 'lucide-react';
+import { Shield, Plus, Loader2, Upload, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { parseUnits } from 'viem';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import { CONTRACT_ADDRESSES, CONTRACT_ABIS } from '@/config/contracts';
 import { toast } from '@/hooks/use-toast';
 import type { Item } from '@/types/Item';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ItemAdminPanelProps {
   existingItems: Item[];
@@ -19,6 +20,7 @@ interface ItemAdminPanelProps {
 export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
   const { writeContract, data: hash } = useWriteContract();
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
+  const { address } = useAccount();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -27,11 +29,78 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
     merchant: '0x1234567890123456789012345678901234567890',
     stock: '',
     category: 'Electronics',
-    imageUrl: '/placeholder.svg',
+    imageUrl: '',
     merchantWhatsApp: '',
   });
 
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+
   const categories = ['Electronics', 'Fashion', 'Home & Living', 'Sports', 'Books', 'Gaming', 'Other'];
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Image must be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!imageFile || !address) return '';
+
+    setUploadingImage(true);
+    try {
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${address}/${Date.now()}.${fileExt}`;
+      
+      const { error } = await supabase.storage
+        .from('exchange-shop-items')
+        .upload(fileName, imageFile);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('exchange-shop-items')
+        .getPublicUrl(fileName);
+
+      toast({
+        title: "Image uploaded",
+        description: "Product image uploaded successfully",
+      });
+
+      return publicUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+      return '';
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setFormData({ ...formData, imageUrl: '' });
+  };
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.price || !formData.stock || !formData.merchantWhatsApp) {
@@ -44,6 +113,13 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
     }
 
     try {
+      // Upload image first if selected
+      let imageUrl = formData.imageUrl;
+      if (imageFile) {
+        imageUrl = await handleImageUpload();
+        if (!imageUrl) return; // Upload failed
+      }
+
       const priceInSmallestUnit = parseUnits(formData.price, 9); // BIT has 9 decimals
 
       await writeContract({
@@ -56,7 +132,7 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
           priceInSmallestUnit,
           BigInt(formData.stock),
           formData.category,
-          formData.imageUrl,
+          imageUrl,
           formData.merchantWhatsApp,
         ],
       } as any);
@@ -74,9 +150,11 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
         merchant: '0x1234567890123456789012345678901234567890',
         stock: '',
         category: 'Electronics',
-        imageUrl: '/placeholder.svg',
+        imageUrl: '',
         merchantWhatsApp: '',
       });
+      setImageFile(null);
+      setImagePreview('');
     } catch (error: any) {
       console.error("Error listing item:", error);
       toast({
@@ -159,6 +237,61 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
             </div>
 
             <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="image">Product Image</Label>
+              <div className="space-y-4">
+                {imagePreview ? (
+                  <div className="relative">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={removeImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                    <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <Label htmlFor="image-upload" className="cursor-pointer">
+                      <span className="text-primary hover:underline">Click to upload</span>
+                      <span className="text-muted-foreground"> or drag and drop</span>
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      PNG, JPG, WEBP up to 5MB
+                    </p>
+                    <Input
+                      id="image-upload"
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+                <div>
+                  <Label htmlFor="imageUrl" className="text-sm text-muted-foreground">
+                    Or paste image URL
+                  </Label>
+                  <Input
+                    id="imageUrl"
+                    value={formData.imageUrl}
+                    onChange={(e) =>
+                      setFormData({ ...formData, imageUrl: e.target.value })
+                    }
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="merchantWhatsApp">Merchant WhatsApp Number *</Label>
               <Input
                 id="merchantWhatsApp"
@@ -182,8 +315,13 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
             </div>
           </div>
 
-          <Button onClick={handleSubmit} className="w-full" disabled={isConfirming}>
-            {isConfirming ? (
+          <Button onClick={handleSubmit} className="w-full" disabled={isConfirming || uploadingImage}>
+            {uploadingImage ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Uploading Image...
+              </>
+            ) : isConfirming ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Listing on Blockchain...

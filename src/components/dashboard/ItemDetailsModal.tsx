@@ -115,8 +115,16 @@ export const ItemDetailsModal = ({ item, open, onClose }: ItemDetailsModalProps)
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-            <Package className="h-24 w-24 text-muted-foreground" />
+          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+            {item.imageUrl ? (
+              <img 
+                src={item.imageUrl} 
+                alt={item.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Package className="h-24 w-24 text-muted-foreground" />
+            )}
           </div>
 
           <div className="space-y-4">
