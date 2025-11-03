@@ -8,7 +8,6 @@ import { CONTRACT_ADDRESSES, CONTRACT_ABIS } from '@/config/contracts';
 import { SUPPORTED_CHAINS } from '@/config/contracts';
 import { formatEther } from 'viem';
 import { Calendar, Gift, Users, Award, ExternalLink, CheckCircle2, Clock, Settings } from 'lucide-react';
-import { useIsContractOwner } from '@/hooks/useIsContractOwner';
 import AirdropAdminPanel from './AirdropAdminPanel';
 import EventCard from './EventCard';
 
@@ -30,7 +29,14 @@ export default function ClaimAirdropTab() {
   const { isSuccess } = useWaitForTransactionReceipt({ hash });
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAdmin, setShowAdmin] = useState(false);
-  const { isOwner } = useIsContractOwner();
+
+  // Check if user is contract owner
+  const { data: owner } = useReadContract({
+    address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
+    abi: CONTRACT_ABIS.CLAIM_AIRDROP,
+    functionName: 'owner',
+  });
+  const isOwner = address && owner ? address.toLowerCase() === (owner as string).toLowerCase() : false;
 
   // Active Events
   const { data: activeEventIds, refetch: refetchEvents } = useReadContract({
