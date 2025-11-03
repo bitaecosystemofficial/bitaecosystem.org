@@ -32,9 +32,11 @@ import { formatEther, encodeAbiParameters, parseAbiParameters, toHex, pad } from
 import { createPublicClient, http } from 'viem';
 import { bsc } from 'viem/chains';
 
-// Helper: Convert string to bytes32
+// Helper: Convert string to bytes32 (left-padded)
 const stringToBytes32 = (str: string): `0x${string}` => {
-  return pad(toHex(str), { size: 32 }) as `0x${string}`;
+  // Convert string to hex and pad to 32 bytes (64 hex chars + 0x)
+  const hex = toHex(str);
+  return pad(hex, { size: 32, dir: 'right' }) as `0x${string}`;
 };
 
 // Helper: Convert category string to uint8
@@ -160,19 +162,48 @@ const CommunityTab = () => {
         try {
           const taskIdBytes32 = stringToBytes32(taskId);
           
-          const taskInfo: any = await publicClient.readContract({
-            address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
-            abi: CONTRACT_ABIS.BITCommunityTasks as any,
-            functionName: 'getTaskInfo',
-            args: [taskIdBytes32] as any,
-          } as any);
+          // Add retry logic for RPC failures
+          let taskInfo: any;
+          let retries = 3;
+          while (retries > 0) {
+            try {
+              taskInfo = await publicClient.readContract({
+                address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
+                abi: CONTRACT_ABIS.BITCommunityTasks as any,
+                functionName: 'getTaskInfo',
+                args: [taskIdBytes32] as any,
+              } as any);
+              break;
+            } catch (err) {
+              retries--;
+              if (retries === 0) throw err;
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
 
-          const userTaskInfo: any = address ? await publicClient.readContract({
-            address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
-            abi: CONTRACT_ABIS.BITCommunityTasks as any,
-            functionName: 'getUserTaskInfo',
-            args: [address, taskIdBytes32] as any,
-          } as any) : [false, 0n, false, 0n];
+          let userTaskInfo: any = [false, 0n, false, 0n];
+          if (address) {
+            retries = 3;
+            while (retries > 0) {
+              try {
+                userTaskInfo = await publicClient.readContract({
+                  address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
+                  abi: CONTRACT_ABIS.BITCommunityTasks as any,
+                  functionName: 'getUserTaskInfo',
+                  args: [address, taskIdBytes32] as any,
+                } as any);
+                break;
+              } catch (err) {
+                retries--;
+                if (retries === 0) {
+                  // If user task info fails, use default values
+                  console.warn(`Failed to fetch user task info for ${taskId}`);
+                  break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            }
+          }
 
           const categoryIcons: Record<string, any> = {
             'check-in': Calendar,
@@ -588,7 +619,59 @@ const CommunityTab = () => {
       {loading && (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">Loading tasks from blockchain...</p>
+            <div className="animate-pulse">
+              <p className="text-muted-foreground">Loading tasks from blockchain...</p>
+              <p className="text-sm text-muted-foreground mt-2">This may take a moment...</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No Tasks Warning for Admin */}
+      {!loading && tasks.length === 0 && isOwner && (
+        <Card className="bg-orange-500/10 border-orange-500/30">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-lg bg-orange-500/20">
+                <Calendar className="w-6 h-6 text-orange-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg mb-2 text-orange-600 dark:text-orange-400">
+                  No Tasks Created Yet
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  As the contract owner, you need to create tasks first. Use the Admin Panel above to:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-2">
+                  <li>Create Daily Check-in tasks (day-1 through day-30)</li>
+                  <li>Create Social media tasks (follow-facebook, follow-twitter, etc.)</li>
+                  <li>Create Event, Webinar, and Forum tasks</li>
+                  <li>Set rewards for each task in BIT tokens</li>
+                </ul>
+                <div className="mt-4 p-3 bg-background/50 rounded-lg">
+                  <p className="text-sm font-semibold mb-1">Quick Start:</p>
+                  <p className="text-xs text-muted-foreground">
+                    1. Click "Show Admin Panel" above<br/>
+                    2. Use the batch create feature to create all 30 check-in days at once<br/>
+                    3. Set rewards (e.g., 10 BIT tokens per task)<br/>
+                    4. Save and deploy the tasks to the blockchain
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No Tasks Warning for Regular Users */}
+      {!loading && tasks.length === 0 && !isOwner && (
+        <Card className="bg-blue-500/10 border-blue-500/30">
+          <CardContent className="p-6 text-center">
+            <Calendar className="w-16 h-16 text-blue-500 mx-auto mb-4 opacity-50" />
+            <h3 className="font-bold text-lg mb-2">No Tasks Available Yet</h3>
+            <p className="text-muted-foreground">
+              Community tasks haven't been set up yet. Please check back soon!
+            </p>
           </CardContent>
         </Card>
       )}
