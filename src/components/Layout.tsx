@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import Navigation from './Navigation';
 import Footer from './Footer';
 import FloatingBubbles from './FloatingBubbles';
-import globalBg from '@/assets/global-bg.jpg';
+import globalBg from '@/assets/new-global-bg.png';
 
 interface LayoutProps {
   children: ReactNode;
