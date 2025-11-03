@@ -26,7 +26,7 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
     name: '',
     description: '',
     price: '',
-    merchant: '0x1234567890123456789012345678901234567890',
+    merchant: address || '',
     stock: '',
     category: 'Electronics',
     imageUrl: '',
@@ -147,7 +147,7 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
         name: '',
         description: '',
         price: '',
-        merchant: '0x1234567890123456789012345678901234567890',
+        merchant: address || '',
         stock: '',
         category: 'Electronics',
         imageUrl: '',
@@ -305,13 +305,17 @@ export function ItemAdminPanel({ existingItems }: ItemAdminPanelProps) {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="merchant">Merchant Address</Label>
+              <Label htmlFor="merchant">Merchant Address (Wallet receiving payments)</Label>
               <Input
                 id="merchant"
                 placeholder="0x..."
                 value={formData.merchant}
                 onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
+                disabled
               />
+              <p className="text-sm text-muted-foreground">
+                Your connected wallet address will receive BIT tokens from sales
+              </p>
             </div>
           </div>
 

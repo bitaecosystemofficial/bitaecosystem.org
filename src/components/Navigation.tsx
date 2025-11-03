@@ -105,7 +105,8 @@ const Navigation = () => {
             <img src={bitAccessLogo} alt="Bit Access Logo" className="w-10 h-10" />
             <div className="flex items-center space-x-2">
               <span className="text-2xl font-bold text-primary">Bit Access</span>
-              <span className="text-sm text-muted-foreground">(BIT)</span>
+              <span className="text-sm text-muted-foreground hidden md:inline">(BIT)</span>
+              {isConnected && <span className="text-sm text-muted-foreground md:hidden">(BIT)</span>}
             </div>
           </Link>
 
