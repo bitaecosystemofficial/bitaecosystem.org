@@ -49,7 +49,7 @@ abstract contract Ownable {
 
 /**
  * @title BITClaimAirdrop
- * @dev Manages daily check-ins, social tasks, webinar and event rewards
+ * @dev Manages daily check-ins, social tasks, and event-based rewards
  */
 contract BITClaimAirdrop is Ownable, ReentrancyGuard {
     IERC20 public immutable bitToken;
@@ -58,13 +58,28 @@ contract BITClaimAirdrop is Ownable, ReentrancyGuard {
     uint256 public constant DAILY_REWARD = 150e18; // 150 BIT per day
     uint256 public constant TOTAL_DAYS = 45;
     uint256 public constant SOCIAL_TOTAL_REWARD = 500e18; // 500 BIT for all social tasks
-    uint256 public constant WEBINAR_BASE_REWARD = 150e18; // 150 BIT base
-    uint256 public constant WEBINAR_GUEST_REWARD = 500e18; // 500 BIT per guest
-    uint256 public constant WEBINAR_INVITER_BONUS = 350e18; // 350 BIT per guest invited
-    uint256 public constant EVENT_BASE_REWARD = 150e18; // 150 BIT base
-    uint256 public constant EVENT_GUEST_REWARD = 500e18; // 500 BIT per guest
-    uint256 public constant EVENT_INVITER_BONUS = 350e18; // 350 BIT per guest invited
     uint8 public constant TOTAL_SOCIAL_TASKS = 8;
+
+    // Event Types
+    enum EventType { Webinar, Presentation }
+
+    // Event Management
+    struct EventInfo {
+        string title;
+        string description;
+        string eventLink;
+        uint256 startTime;
+        uint256 endTime;
+        uint256 rewardPerAttendee;
+        EventType eventType;
+        bool isActive;
+    }
+
+    uint256 public eventCounter;
+    mapping(uint256 => EventInfo) public events;
+    mapping(uint256 => mapping(address => bool)) public eventAttendance;
+    mapping(uint256 => mapping(address => bool)) public eventRewardClaimed;
+    mapping(uint256 => mapping(address => uint8)) public eventReferrals;
 
     // Daily Check-in Data
     struct DailyCheckIn {
@@ -83,27 +98,15 @@ contract BITClaimAirdrop is Ownable, ReentrancyGuard {
     }
     mapping(address => SocialTasks) public socialTasks;
 
-    // Webinar/Event Data
-    struct TaskReward {
-        uint256 baseReward;
-        uint256 guestBonus;
-        uint256 totalReward;
-        bool approved;
-        bool claimed;
-        uint8 guestCount;
-    }
-    mapping(address => TaskReward) public webinarRewards;
-    mapping(address => TaskReward) public eventRewards;
-
     // Events
     event DailyCheckIn(address indexed user, uint256 day, uint256 timestamp);
     event DailyRewardsClaimed(address indexed user, uint256 amount);
     event SocialTaskCompleted(address indexed user, uint8 taskId);
     event SocialRewardsClaimed(address indexed user, uint256 amount);
-    event WebinarRewardApproved(address indexed user, uint256 baseReward, uint256 guestBonus, uint8 guestCount);
-    event WebinarRewardClaimed(address indexed user, uint256 amount);
-    event EventRewardApproved(address indexed user, uint256 baseReward, uint256 guestBonus, uint8 guestCount);
-    event EventRewardClaimed(address indexed user, uint256 amount);
+    event EventCreated(uint256 indexed eventId, string title, EventType eventType, uint256 startTime);
+    event EventDeactivated(uint256 indexed eventId);
+    event AttendanceValidated(uint256 indexed eventId, address indexed user, uint8 guestCount);
+    event EventRewardClaimed(uint256 indexed eventId, address indexed user, uint256 amount);
 
     constructor(address _bitToken) {
         require(_bitToken != address(0), "Zero address");
@@ -224,102 +227,150 @@ contract BITClaimAirdrop is Ownable, ReentrancyGuard {
         return socialTasks[_user].taskCompleted[_taskId];
     }
 
-    // ========== WEBINAR FUNCTIONS ==========
+    // ========== EVENT MANAGEMENT FUNCTIONS ==========
 
-    function approveWebinarReward(
-        address _user,
-        uint8 _guestCount
-    ) external onlyOwner {
-        TaskReward storage reward = webinarRewards[_user];
-        require(!reward.approved, "Already approved");
+    function createEvent(
+        string memory _title,
+        string memory _description,
+        string memory _eventLink,
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _rewardPerAttendee,
+        EventType _eventType
+    ) external onlyOwner returns (uint256) {
+        require(_startTime > block.timestamp, "Start time must be in future");
+        require(_endTime > _startTime, "End time must be after start time");
+        require(_rewardPerAttendee > 0, "Reward must be greater than 0");
 
-        reward.baseReward = WEBINAR_BASE_REWARD;
-        reward.guestBonus = WEBINAR_INVITER_BONUS * _guestCount;
-        reward.totalReward = reward.baseReward + reward.guestBonus;
-        reward.guestCount = _guestCount;
-        reward.approved = true;
-
-        emit WebinarRewardApproved(_user, reward.baseReward, reward.guestBonus, _guestCount);
-    }
-
-    function claimWebinarReward() external nonReentrant {
-        TaskReward storage reward = webinarRewards[msg.sender];
+        uint256 eventId = eventCounter++;
         
-        require(reward.approved, "Not approved");
-        require(!reward.claimed, "Already claimed");
+        events[eventId] = EventInfo({
+            title: _title,
+            description: _description,
+            eventLink: _eventLink,
+            startTime: _startTime,
+            endTime: _endTime,
+            rewardPerAttendee: _rewardPerAttendee,
+            eventType: _eventType,
+            isActive: true
+        });
 
-        reward.claimed = true;
-
-        require(bitToken.transfer(msg.sender, reward.totalReward), "Transfer failed");
-        emit WebinarRewardClaimed(msg.sender, reward.totalReward);
+        emit EventCreated(eventId, _title, _eventType, _startTime);
+        return eventId;
     }
 
-    function getWebinarRewardStatus(address _user) external view returns (
-        uint256 baseReward,
-        uint256 guestBonus,
-        uint256 totalReward,
-        bool approved,
-        bool claimed,
-        uint8 guestCount
-    ) {
-        TaskReward storage reward = webinarRewards[_user];
-        return (
-            reward.baseReward,
-            reward.guestBonus,
-            reward.totalReward,
-            reward.approved,
-            reward.claimed,
-            reward.guestCount
-        );
+    function deactivateEvent(uint256 _eventId) external onlyOwner {
+        require(_eventId < eventCounter, "Invalid event ID");
+        events[_eventId].isActive = false;
+        emit EventDeactivated(_eventId);
     }
 
-    // ========== EVENT FUNCTIONS ==========
+    function validateAttendee(uint256 _eventId, address _user, uint8 _guestCount) external onlyOwner {
+        require(_eventId < eventCounter, "Invalid event ID");
+        require(_user != address(0), "Invalid user address");
+        require(!eventAttendance[_eventId][_user], "Already validated");
 
-    function approveEventReward(
-        address _user,
-        uint8 _guestCount
+        eventAttendance[_eventId][_user] = true;
+        eventReferrals[_eventId][_user] = _guestCount;
+
+        emit AttendanceValidated(_eventId, _user, _guestCount);
+    }
+
+    function batchValidateAttendees(
+        uint256 _eventId, 
+        address[] calldata _users, 
+        uint8[] calldata _guestCounts
     ) external onlyOwner {
-        TaskReward storage reward = eventRewards[_user];
-        require(!reward.approved, "Already approved");
+        require(_eventId < eventCounter, "Invalid event ID");
+        require(_users.length == _guestCounts.length, "Array length mismatch");
 
-        reward.baseReward = EVENT_BASE_REWARD;
-        reward.guestBonus = EVENT_INVITER_BONUS * _guestCount;
-        reward.totalReward = reward.baseReward + reward.guestBonus;
-        reward.guestCount = _guestCount;
-        reward.approved = true;
-
-        emit EventRewardApproved(_user, reward.baseReward, reward.guestBonus, _guestCount);
+        for (uint256 i = 0; i < _users.length; i++) {
+            if (!eventAttendance[_eventId][_users[i]]) {
+                eventAttendance[_eventId][_users[i]] = true;
+                eventReferrals[_eventId][_users[i]] = _guestCounts[i];
+                emit AttendanceValidated(_eventId, _users[i], _guestCounts[i]);
+            }
+        }
     }
 
-    function claimEventReward() external nonReentrant {
-        TaskReward storage reward = eventRewards[msg.sender];
+    function claimEventReward(uint256 _eventId) external nonReentrant {
+        require(_eventId < eventCounter, "Invalid event ID");
+        require(events[_eventId].isActive, "Event not active");
+        require(block.timestamp >= events[_eventId].endTime, "Event not ended yet");
+        require(eventAttendance[_eventId][msg.sender], "Not validated as attendee");
+        require(!eventRewardClaimed[_eventId][msg.sender], "Already claimed");
+
+        EventInfo memory eventInfo = events[_eventId];
+        uint8 guestCount = eventReferrals[_eventId][msg.sender];
         
-        require(reward.approved, "Not approved");
-        require(!reward.claimed, "Already claimed");
+        // Base reward + guest bonus (350 BIT per guest for webinars)
+        uint256 reward = eventInfo.rewardPerAttendee;
+        if (eventInfo.eventType == EventType.Webinar && guestCount > 0) {
+            reward += (350e18 * guestCount);
+        }
 
-        reward.claimed = true;
+        require(bitToken.balanceOf(address(this)) >= reward, "Insufficient contract balance");
 
-        require(bitToken.transfer(msg.sender, reward.totalReward), "Transfer failed");
-        emit EventRewardClaimed(msg.sender, reward.totalReward);
+        eventRewardClaimed[_eventId][msg.sender] = true;
+        require(bitToken.transfer(msg.sender, reward), "Transfer failed");
+
+        emit EventRewardClaimed(_eventId, msg.sender, reward);
     }
 
-    function getEventRewardStatus(address _user) external view returns (
-        uint256 baseReward,
-        uint256 guestBonus,
-        uint256 totalReward,
-        bool approved,
-        bool claimed,
-        uint8 guestCount
+    // ========== VIEW FUNCTIONS ==========
+
+    function getEvent(uint256 _eventId) external view returns (
+        string memory title,
+        string memory description,
+        string memory eventLink,
+        uint256 startTime,
+        uint256 endTime,
+        uint256 rewardPerAttendee,
+        EventType eventType,
+        bool isActive
     ) {
-        TaskReward storage reward = eventRewards[_user];
-        return (
-            reward.baseReward,
-            reward.guestBonus,
-            reward.totalReward,
-            reward.approved,
-            reward.claimed,
-            reward.guestCount
-        );
+        require(_eventId < eventCounter, "Invalid event ID");
+        EventInfo memory e = events[_eventId];
+        return (e.title, e.description, e.eventLink, e.startTime, e.endTime, e.rewardPerAttendee, e.eventType, e.isActive);
+    }
+
+    function getActiveEvents() external view returns (uint256[] memory) {
+        uint256 activeCount = 0;
+        for (uint256 i = 0; i < eventCounter; i++) {
+            if (events[i].isActive) {
+                activeCount++;
+            }
+        }
+
+        uint256[] memory activeEventIds = new uint256[](activeCount);
+        uint256 index = 0;
+        for (uint256 i = 0; i < eventCounter; i++) {
+            if (events[i].isActive) {
+                activeEventIds[index] = i;
+                index++;
+            }
+        }
+
+        return activeEventIds;
+    }
+
+    function getUserEventStatus(uint256 _eventId, address _user) external view returns (
+        bool validated,
+        bool claimed,
+        uint8 guestCount,
+        uint256 potentialReward
+    ) {
+        validated = eventAttendance[_eventId][_user];
+        claimed = eventRewardClaimed[_eventId][_user];
+        guestCount = eventReferrals[_eventId][_user];
+        
+        if (validated && !claimed && _eventId < eventCounter) {
+            EventInfo memory eventInfo = events[_eventId];
+            potentialReward = eventInfo.rewardPerAttendee;
+            if (eventInfo.eventType == EventType.Webinar && guestCount > 0) {
+                potentialReward += (350e18 * guestCount);
+            }
+        }
     }
 
     // ========== ADMIN FUNCTIONS ==========

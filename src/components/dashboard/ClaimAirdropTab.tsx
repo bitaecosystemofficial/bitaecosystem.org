@@ -7,7 +7,10 @@ import { toast } from '@/hooks/use-toast';
 import { CONTRACT_ADDRESSES, CONTRACT_ABIS } from '@/config/contracts';
 import { SUPPORTED_CHAINS } from '@/config/contracts';
 import { formatEther } from 'viem';
-import { Calendar, Gift, Users, Video, Award, ExternalLink, CheckCircle2, Clock } from 'lucide-react';
+import { Calendar, Gift, Users, Award, ExternalLink, CheckCircle2, Clock, Settings } from 'lucide-react';
+import { useIsContractOwner } from '@/hooks/useIsContractOwner';
+import AirdropAdminPanel from './AirdropAdminPanel';
+import EventCard from './EventCard';
 
 const SOCIAL_TASKS = [
   { id: 0, name: 'Follow on Twitter', url: 'https://twitter.com/bitaccess' },
@@ -26,6 +29,16 @@ export default function ClaimAirdropTab() {
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isSuccess } = useWaitForTransactionReceipt({ hash });
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const { isOwner } = useIsContractOwner();
+
+  // Active Events
+  const { data: activeEventIds, refetch: refetchEvents } = useReadContract({
+    address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
+    abi: CONTRACT_ABIS.CLAIM_AIRDROP,
+    functionName: 'getActiveEvents',
+    query: { enabled: true },
+  });
 
   // Daily Check-in Status
   const { data: dailyStatus, refetch: refetchDaily } = useReadContract({
@@ -45,33 +58,14 @@ export default function ClaimAirdropTab() {
     query: { enabled: !!address },
   });
 
-  // Webinar Reward Status
-  const { data: webinarStatus, refetch: refetchWebinar } = useReadContract({
-    address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
-    abi: CONTRACT_ABIS.CLAIM_AIRDROP,
-    functionName: 'getWebinarRewardStatus',
-    args: [address],
-    query: { enabled: !!address },
-  });
-
-  // Event Reward Status
-  const { data: eventStatus, refetch: refetchEvent } = useReadContract({
-    address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
-    abi: CONTRACT_ABIS.CLAIM_AIRDROP,
-    functionName: 'getEventRewardStatus',
-    args: [address],
-    query: { enabled: !!address },
-  });
-
   useEffect(() => {
     if (isSuccess) {
       refetchDaily();
       refetchSocial();
-      refetchWebinar();
-      refetchEvent();
+      refetchEvents();
       setRefreshKey(prev => prev + 1);
     }
-  }, [isSuccess, refetchDaily, refetchSocial, refetchWebinar, refetchEvent]);
+  }, [isSuccess, refetchDaily, refetchSocial, refetchEvents]);
 
   const ensureCorrectNetwork = async () => {
     if (chainId !== SUPPORTED_CHAINS.BSC_MAINNET) {
@@ -127,28 +121,18 @@ export default function ClaimAirdropTab() {
     } as any);
   };
 
-  const handleClaimWebinarReward = async () => {
-    if (!(await ensureCorrectNetwork())) return;
-    writeContract({
-      address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
-      abi: CONTRACT_ABIS.CLAIM_AIRDROP as any,
-      functionName: 'claimWebinarReward',
-    } as any);
-  };
-
-  const handleClaimEventReward = async () => {
+  const handleClaimEventReward = async (eventId: number) => {
     if (!(await ensureCorrectNetwork())) return;
     writeContract({
       address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
       abi: CONTRACT_ABIS.CLAIM_AIRDROP as any,
       functionName: 'claimEventReward',
+      args: [BigInt(eventId)],
     } as any);
   };
 
   const dailyData = dailyStatus as [bigint, bigint, bigint, boolean, boolean, bigint] | undefined;
   const socialData = socialStatus as [number, boolean, boolean[]] | undefined;
-  const webinarData = webinarStatus as [bigint, bigint, bigint, boolean, boolean, number] | undefined;
-  const eventData = eventStatus as [bigint, bigint, bigint, boolean, boolean, number] | undefined;
 
   const totalDays = dailyData ? Number(dailyData[0]) : 0;
   const canCheckIn = dailyData ? dailyData[4] : false;
@@ -160,16 +144,30 @@ export default function ClaimAirdropTab() {
   const tasksCompleted = socialData ? socialData[2] : Array(8).fill(false);
   const socialProgress = (socialCompletedCount / 8) * 100;
 
-  const webinarApproved = webinarData ? webinarData[3] : false;
-  const webinarClaimed = webinarData ? webinarData[4] : false;
-  const webinarTotalReward = webinarData ? formatEther(webinarData[2]) : '0';
+  const eventIds = (activeEventIds as bigint[]) || [];
 
-  const eventApproved = eventData ? eventData[3] : false;
-  const eventClaimed = eventData ? eventData[4] : false;
-  const eventTotalReward = eventData ? formatEther(eventData[2]) : '0';
+  if (showAdmin && isOwner) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Admin Panel</h2>
+          <Button variant="outline" onClick={() => setShowAdmin(false)}>
+            Back to Rewards
+          </Button>
+        </div>
+        <AirdropAdminPanel />
+      </div>
+    );
+  }
 
   return (
     <div key={refreshKey} className="space-y-6">
+      {isOwner && (
+        <Button onClick={() => setShowAdmin(true)} variant="outline" className="mb-4">
+          <Settings className="w-4 h-4 mr-2" />
+          Admin Panel
+        </Button>
+      )}
       {/* Daily Check-in Section */}
       <Card className="bg-card/50 backdrop-blur-sm border-border/50">
         <CardHeader>
@@ -309,99 +307,100 @@ export default function ClaimAirdropTab() {
         </CardContent>
       </Card>
 
-      {/* Webinar Section */}
-      <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Video className="w-5 h-5 text-primary" />
-            Zoom Webinar Reward
-          </CardTitle>
-          <CardDescription>
-            Earn 150 BIT for attending + 350 BIT bonus per guest you invite
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {!webinarApproved && (
-            <div className="p-4 bg-secondary/30 rounded-lg border border-border/50">
-              <p className="text-sm text-muted-foreground">
-                Admin approval pending. Attend the webinar and wait for verification.
-              </p>
-            </div>
-          )}
-
-          {webinarApproved && !webinarClaimed && (
-            <div className="space-y-4">
-              <div className="p-4 bg-primary/10 rounded-lg">
-                <p className="text-lg font-semibold text-primary">
-                  Total Reward: {webinarTotalReward} BIT
-                </p>
-              </div>
-              <Button
-                onClick={handleClaimWebinarReward}
-                disabled={isPending}
-                className="w-full bg-gradient-to-r from-primary to-accent"
-              >
-                <Gift className="w-4 h-4 mr-2" />
-                Claim Webinar Reward
-              </Button>
-            </div>
-          )}
-
-          {webinarClaimed && (
-            <div className="flex items-center justify-center gap-2 text-primary p-4 bg-primary/10 rounded-lg">
-              <CheckCircle2 className="w-5 h-5" />
-              <span className="font-semibold">Webinar Reward Claimed!</span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Event Section */}
+      {/* Events Section */}
       <Card className="bg-card/50 backdrop-blur-sm border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="w-5 h-5 text-primary" />
-            Event / Presentation Reward
+            Active Events & Webinars
           </CardTitle>
           <CardDescription>
-            Earn 150 BIT for attending + 350 BIT bonus per guest you invite
+            Attend events to earn BIT rewards. Countdown timers show when events start.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {!eventApproved && (
-            <div className="p-4 bg-secondary/30 rounded-lg border border-border/50">
-              <p className="text-sm text-muted-foreground">
-                Admin approval pending. Attend the event and wait for verification.
-              </p>
+        <CardContent>
+          {eventIds.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              <Award className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No active events at this time. Check back later!</p>
             </div>
-          )}
-
-          {eventApproved && !eventClaimed && (
-            <div className="space-y-4">
-              <div className="p-4 bg-primary/10 rounded-lg">
-                <p className="text-lg font-semibold text-primary">
-                  Total Reward: {eventTotalReward} BIT
-                </p>
-              </div>
-              <Button
-                onClick={handleClaimEventReward}
-                disabled={isPending}
-                className="w-full bg-gradient-to-r from-primary to-accent"
-              >
-                <Gift className="w-4 h-4 mr-2" />
-                Claim Event Reward
-              </Button>
-            </div>
-          )}
-
-          {eventClaimed && (
-            <div className="flex items-center justify-center gap-2 text-primary p-4 bg-primary/10 rounded-lg">
-              <CheckCircle2 className="w-5 h-5" />
-              <span className="font-semibold">Event Reward Claimed!</span>
+          ) : (
+            <div className="grid gap-4">
+              {eventIds.map((eventId) => (
+                <EventCardWrapper
+                  key={Number(eventId)}
+                  eventId={Number(eventId)}
+                  userAddress={address}
+                  onClaim={() => handleClaimEventReward(Number(eventId))}
+                  isPending={isPending}
+                />
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Wrapper component to fetch individual event data
+function EventCardWrapper({
+  eventId,
+  userAddress,
+  onClaim,
+  isPending,
+}: {
+  eventId: number;
+  userAddress: `0x${string}` | undefined;
+  onClaim: () => void;
+  isPending: boolean;
+}) {
+  const { data: eventData } = useReadContract({
+    address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
+    abi: CONTRACT_ABIS.CLAIM_AIRDROP,
+    functionName: 'getEvent',
+    args: [BigInt(eventId)],
+  });
+
+  const { data: userStatus } = useReadContract({
+    address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
+    abi: CONTRACT_ABIS.CLAIM_AIRDROP,
+    functionName: 'getUserEventStatus',
+    args: [BigInt(eventId), userAddress],
+    query: { enabled: !!userAddress },
+  });
+
+  if (!eventData) return null;
+
+  const [title, description, eventLink, startTime, endTime, rewardPerAttendee, eventType, isActive] =
+    eventData as [string, string, string, bigint, bigint, bigint, number, boolean];
+
+  const [validated, claimed, guestCount, potentialReward] = (userStatus as [boolean, boolean, number, bigint]) || [
+    false,
+    false,
+    0,
+    0n,
+  ];
+
+  return (
+    <EventCard
+      eventId={eventId}
+      title={title}
+      description={description}
+      eventLink={eventLink}
+      startTime={startTime}
+      endTime={endTime}
+      rewardPerAttendee={rewardPerAttendee}
+      eventType={eventType}
+      isActive={isActive}
+      userStatus={{
+        validated,
+        claimed,
+        guestCount,
+        potentialReward,
+      }}
+      onClaim={onClaim}
+      isPending={isPending}
+    />
   );
 }
