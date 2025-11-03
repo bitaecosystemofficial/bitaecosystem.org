@@ -11,8 +11,8 @@ if (!projectId) {
 const metadata = {
   name: 'Bit Access',
   description: 'Revolutionizing Daily Life Through Web3',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://bitaccess.io',
-  icons: [typeof window !== 'undefined' ? `${window.location.origin}/icon-192x192.png` : 'https://bitaccess.io/icon.png']
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://bitaecosystem.org',
+  icons: [typeof window !== 'undefined' ? `${window.location.origin}/icon-192x192.png` : 'https://bitaecosystem.org/icon.png']
 };
 
 const chains = [bsc, polygon, arbitrum, base, mainnet, bscTestnet] as const;
