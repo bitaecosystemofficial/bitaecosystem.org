@@ -212,31 +212,32 @@ contract BITCommunityTasks is Ownable, ReentrancyGuard {
         emit TaskCompleted(msg.sender, _taskId, task.reward);
     }
     
-    // Gas-optimized: inline day parsing
+    // Gas-optimized: parse day number from taskId
     function _getNextCheckIn(bytes32 _taskId) private pure returns (bytes32) {
-        // Extract day number from bytes32 (e.g., "day-1", "day-30")
-        uint256 day;
-        assembly {
-            let lastByte := byte(31, _taskId)
-            day := sub(lastByte, 48) // ASCII '0' = 48
-            
-            // Check for two-digit day
-            let secondLastByte := byte(30, _taskId)
-            if and(gt(secondLastByte, 47), lt(secondLastByte, 58)) {
-                day := add(mul(sub(secondLastByte, 48), 10), day)
+        // Simple day extraction: get last 1-2 characters as day number
+        bytes memory taskIdBytes = abi.encodePacked(_taskId);
+        uint256 day = 0;
+        uint256 len = taskIdBytes.length;
+        
+        // Parse day number from end of bytes (handles "day-1" to "day-30")
+        for (uint256 i = len - 1; i > 0; i--) {
+            bytes1 char = taskIdBytes[i];
+            if (char >= 0x30 && char <= 0x39) { // '0' to '9'
+                day = day + (uint8(char) - 48) * (10 ** (len - 1 - i));
+            } else if (char == 0x2d) { // '-'
+                break;
             }
         }
         
-        if (day >= 30) return bytes32(0);
+        if (day == 0 || day >= 30) return bytes32(0);
         
         unchecked { day++; }
         
-        // Construct next day ID
+        // Construct next day bytes32
         if (day < 10) {
-            return bytes32(bytes5("day-")) | bytes32(uint256(day + 48) << 248);
-        } else {
-            return bytes32(bytes5("day-")) | bytes32(uint256((day / 10) + 48) << 248) | bytes32(uint256((day % 10) + 48) << 240);
+            return bytes32(abi.encodePacked("day-", uint8(day + 48)));
         }
+        return bytes32(abi.encodePacked("day-", uint8((day / 10) + 48), uint8((day % 10) + 48)));
     }
     
         
