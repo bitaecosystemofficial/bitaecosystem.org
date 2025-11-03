@@ -57,7 +57,7 @@
         "type": "uint256"
       }
     ],
-    "name": "DailyCheckIn",
+    "name": "DailyCheckInEvent",
     "type": "event"
   },
   {
@@ -108,19 +108,6 @@
       }
     ],
     "name": "EventCreated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "eventId",
-        "type": "uint256"
-      }
-    ],
-    "name": "EventDeactivated",
     "type": "event"
   },
   {
@@ -204,81 +191,6 @@
     ],
     "name": "SocialTaskCompleted",
     "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "DAILY_REWARD",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "SOCIAL_TOTAL_REWARD",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "TOTAL_DAYS",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "TOTAL_SOCIAL_TASKS",
-    "outputs": [
-      {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_eventId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address[]",
-        "name": "_users",
-        "type": "address[]"
-      },
-      {
-        "internalType": "uint8[]",
-        "name": "_guestCounts",
-        "type": "uint8[]"
-      }
-    ],
-    "name": "batchValidateAttendees",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
   },
   {
     "inputs": [],
@@ -427,13 +339,24 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_eventId",
+        "name": "",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
-    "name": "deactivateEvent",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "eventAttendance",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -444,6 +367,54 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "eventReferrals",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "eventRewardClaimed",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -505,215 +476,12 @@
   },
   {
     "inputs": [],
-    "name": "getActiveEvents",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "getContractBalance",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      }
-    ],
-    "name": "getDailyCheckInStatus",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "totalDays",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "lastCheckInDay",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "firstCheckInTimestamp",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "claimed",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "canCheckIn",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "nextCheckInTime",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_eventId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getEvent",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "title",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "description",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "eventLink",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "startTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "endTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "rewardPerAttendee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "enum BITClaimAirdrop.EventType",
-        "name": "eventType",
-        "type": "uint8"
-      },
-      {
-        "internalType": "bool",
-        "name": "isActive",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      }
-    ],
-    "name": "getSocialTaskStatus",
-    "outputs": [
-      {
-        "internalType": "uint8",
-        "name": "completedCount",
-        "type": "uint8"
-      },
-      {
-        "internalType": "bool",
-        "name": "claimed",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool[8]",
-        "name": "tasksCompleted",
-        "type": "bool[8]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_eventId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      }
-    ],
-    "name": "getUserEventStatus",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "validated",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "claimed",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint8",
-        "name": "guestCount",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint256",
-        "name": "potentialReward",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      },
-      {
-        "internalType": "uint8",
-        "name": "_taskId",
-        "type": "uint8"
-      }
-    ],
-    "name": "isSocialTaskCompleted",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -727,6 +495,30 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "socialTasks",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "completedCount",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bool",
+        "name": "claimed",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",

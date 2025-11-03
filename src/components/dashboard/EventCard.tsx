@@ -4,7 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, ExternalLink, Gift } from 'lucide-react';
 import { useCountdown } from '@/hooks/useCountdown';
-import { formatEther } from 'viem';
+
+// Format BIT tokens (9 decimals)
+const formatBIT = (amount: bigint): string => {
+  const decimals = 1e9;
+  const formatted = Number(amount) / decimals;
+  return formatted.toLocaleString('en-US', { 
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2 
+  });
+};
 
 interface EventCardProps {
   eventId: number;
@@ -97,7 +106,7 @@ const EventCard = ({
         <div className="flex items-center gap-2 text-sm">
           <Gift className="w-4 h-4 text-primary" />
           <span>
-            Reward: {formatEther(rewardPerAttendee)} BIT
+            Reward: {formatBIT(rewardPerAttendee)} BIT
             {userStatus.guestCount > 0 && eventType === 0 && 
               ` + ${userStatus.guestCount * 350} BIT bonus`
             }
@@ -124,7 +133,7 @@ const EventCard = ({
             className="flex-1"
           >
             <Gift className="w-4 h-4 mr-2" />
-            {isPending ? 'Claiming...' : `Claim ${formatEther(userStatus.potentialReward)} BIT`}
+            {isPending ? 'Claiming...' : `Claim ${formatBIT(userStatus.potentialReward)} BIT`}
           </Button>
         )}
       </div>

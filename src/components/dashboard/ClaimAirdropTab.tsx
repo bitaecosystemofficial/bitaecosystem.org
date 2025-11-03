@@ -38,11 +38,11 @@ export default function ClaimAirdropTab() {
   });
   const isOwner = address && owner ? address.toLowerCase() === (owner as string).toLowerCase() : false;
 
-  // Active Events
-  const { data: activeEventIds, refetch: refetchEvents } = useReadContract({
+  // Get event counter
+  const { data: eventCounter, refetch: refetchEvents } = useReadContract({
     address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
     abi: CONTRACT_ABIS.CLAIM_AIRDROP,
-    functionName: 'getActiveEvents',
+    functionName: 'eventCounter',
     query: { enabled: true },
   });
 
@@ -50,7 +50,7 @@ export default function ClaimAirdropTab() {
   const { data: dailyStatus, refetch: refetchDaily } = useReadContract({
     address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
     abi: CONTRACT_ABIS.CLAIM_AIRDROP,
-    functionName: 'getDailyCheckInStatus',
+    functionName: 'dailyCheckIns',
     args: [address],
     query: { enabled: !!address },
   });
@@ -59,7 +59,7 @@ export default function ClaimAirdropTab() {
   const { data: socialStatus, refetch: refetchSocial } = useReadContract({
     address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
     abi: CONTRACT_ABIS.CLAIM_AIRDROP,
-    functionName: 'getSocialTaskStatus',
+    functionName: 'socialTasks',
     args: [address],
     query: { enabled: !!address },
   });
@@ -137,20 +137,25 @@ export default function ClaimAirdropTab() {
     } as any);
   };
 
-  const dailyData = dailyStatus as [bigint, bigint, bigint, boolean, boolean, bigint] | undefined;
-  const socialData = socialStatus as [number, boolean, boolean[]] | undefined;
+  const dailyData = dailyStatus as [bigint, bigint, bigint, boolean] | undefined;
+  const socialData = socialStatus as [number, boolean] | undefined;
 
-  const totalDays = dailyData ? Number(dailyData[0]) : 0;
-  const canCheckIn = dailyData ? dailyData[4] : false;
+  const totalDays = dailyData ? Number(dailyData[1]) : 0;
+  const firstCheckInTimestamp = dailyData ? Number(dailyData[2]) : 0;
   const dailyClaimed = dailyData ? dailyData[3] : false;
   const dailyProgress = (totalDays / 45) * 100;
 
+  // Calculate if user can check in today
+  const canCheckIn = firstCheckInTimestamp > 0 && totalDays < 45 && !dailyClaimed
+    ? Math.floor((Date.now() / 1000 - firstCheckInTimestamp) / 86400) >= totalDays
+    : firstCheckInTimestamp === 0;
+
   const socialCompletedCount = socialData ? socialData[0] : 0;
   const socialClaimed = socialData ? socialData[1] : false;
-  const tasksCompleted = socialData ? socialData[2] : Array(8).fill(false);
   const socialProgress = (socialCompletedCount / 8) * 100;
 
-  const eventIds = (activeEventIds as bigint[]) || [];
+  // Generate event IDs from counter
+  const eventIds = eventCounter ? Array.from({ length: Number(eventCounter) }, (_, i) => BigInt(i)) : [];
 
   if (showAdmin && isOwner) {
     return (
@@ -255,42 +260,30 @@ export default function ClaimAirdropTab() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {SOCIAL_TASKS.map((task) => {
-              const isCompleted = tasksCompleted[task.id];
-              return (
-                <div
-                  key={task.id}
-                  className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50"
-                >
-                  <div className="flex items-center gap-2">
-                    {isCompleted ? (
-                      <CheckCircle2 className="w-4 h-4 text-primary" />
-                    ) : (
-                      <div className="w-4 h-4 rounded-full border-2 border-muted-foreground" />
-                    )}
-                    <span className="text-sm font-medium text-foreground">{task.name}</span>
-                  </div>
-                  {!isCompleted && (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.open(task.url, '_blank')}
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleCompleteSocialTask(task.id)}
-                        disabled={isPending}
-                      >
-                        Complete
-                      </Button>
-                    </div>
-                  )}
+            {SOCIAL_TASKS.map((task) => (
+              <div
+                key={task.id}
+                className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50"
+              >
+                <span className="text-sm font-medium text-foreground">{task.name}</span>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(task.url, '_blank')}
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleCompleteSocialTask(task.id)}
+                    disabled={isPending}
+                  >
+                    Complete
+                  </Button>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
 
           {socialCompletedCount === 8 && !socialClaimed && (
@@ -364,14 +357,30 @@ function EventCardWrapper({
   const { data: eventData } = useReadContract({
     address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
     abi: CONTRACT_ABIS.CLAIM_AIRDROP,
-    functionName: 'getEvent',
+    functionName: 'events',
     args: [BigInt(eventId)],
   });
 
-  const { data: userStatus } = useReadContract({
+  const { data: isValidated } = useReadContract({
     address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
     abi: CONTRACT_ABIS.CLAIM_AIRDROP,
-    functionName: 'getUserEventStatus',
+    functionName: 'eventAttendance',
+    args: [BigInt(eventId), userAddress],
+    query: { enabled: !!userAddress },
+  });
+
+  const { data: hasClaimed } = useReadContract({
+    address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
+    abi: CONTRACT_ABIS.CLAIM_AIRDROP,
+    functionName: 'eventRewardClaimed',
+    args: [BigInt(eventId), userAddress],
+    query: { enabled: !!userAddress },
+  });
+
+  const { data: guestCount } = useReadContract({
+    address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
+    abi: CONTRACT_ABIS.CLAIM_AIRDROP,
+    functionName: 'eventReferrals',
     args: [BigInt(eventId), userAddress],
     query: { enabled: !!userAddress },
   });
@@ -381,12 +390,21 @@ function EventCardWrapper({
   const [title, description, eventLink, startTime, endTime, rewardPerAttendee, eventType, isActive] =
     eventData as [string, string, string, bigint, bigint, bigint, number, boolean];
 
-  const [validated, claimed, guestCount, potentialReward] = (userStatus as [boolean, boolean, number, bigint]) || [
-    false,
-    false,
-    0,
-    0n,
-  ];
+  // Calculate potential reward (9 decimals)
+  const DECIMALS = BigInt(1e9);
+  let potentialReward = rewardPerAttendee;
+  
+  // Type cast for guest count
+  const guests = (guestCount as number) || 0;
+  
+  // If webinar (eventType === 0) and has guests, add bonus
+  if (eventType === 0 && guests > 0) {
+    const bonusPerGuest = BigInt(350) * DECIMALS;
+    potentialReward += bonusPerGuest * BigInt(guests);
+  }
+
+  const validated = (isValidated as boolean) || false;
+  const claimed = (hasClaimed as boolean) || false;
 
   return (
     <EventCard
@@ -402,7 +420,7 @@ function EventCardWrapper({
       userStatus={{
         validated,
         claimed,
-        guestCount,
+        guestCount: guests,
         potentialReward,
       }}
       onClaim={onClaim}

@@ -56,7 +56,8 @@ const AirdropAdminPanel = () => {
     try {
       const startTimestamp = Math.floor(new Date(`${formData.startDate}T${formData.startTime}`).getTime() / 1000);
       const endTimestamp = Math.floor(new Date(`${formData.endDate}T${formData.endTime}`).getTime() / 1000);
-      const rewardAmount = parseEther(formData.reward);
+      // Convert to 9 decimals (1e9) instead of 18 decimals
+      const rewardAmount = BigInt(Math.floor(parseFloat(formData.reward) * 1e9));
 
       writeContract({
         address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
@@ -104,16 +105,22 @@ const AirdropAdminPanel = () => {
         return;
       }
 
-      writeContract({
-        address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
-        abi: CONTRACT_ABIS.CLAIM_AIRDROP as any,
-        functionName: 'batchValidateAttendees',
-        args: [BigInt(attendees.eventId), wallets, counts],
-      } as any);
+      // Validate attendees one by one since batchValidateAttendees doesn't exist
+      for (let i = 0; i < wallets.length; i++) {
+        writeContract({
+          address: CONTRACT_ADDRESSES.CLAIM_AIRDROP,
+          abi: CONTRACT_ABIS.CLAIM_AIRDROP as any,
+          functionName: 'validateAttendee',
+          args: [BigInt(attendees.eventId), wallets[i], counts[i]],
+        } as any);
+        
+        // Small delay between transactions
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
       toast({
         title: "Validating Attendees",
-        description: "Transaction submitted...",
+        description: "Transactions submitted...",
       });
     } catch (error: any) {
       toast({
