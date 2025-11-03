@@ -16,27 +16,14 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "tokenAddress",
-        "type": "address"
-      }
-    ],
-    "name": "BITTokenUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
         "name": "user",
         "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "string",
+        "internalType": "uint8",
         "name": "category",
-        "type": "string"
+        "type": "uint8"
       },
       {
         "indexed": false,
@@ -58,35 +45,10 @@
         "type": "address"
       },
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newStreak",
-        "type": "uint256"
-      }
-    ],
-    "name": "CheckInStreakUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
+        "internalType": "bytes32",
         "name": "taskId",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "timestamp",
-        "type": "uint256"
+        "type": "bytes32"
       }
     ],
     "name": "LinkVisited",
@@ -115,35 +77,22 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "enabled",
-        "type": "bool"
-      }
-    ],
-    "name": "RewardsToggled",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "user",
         "type": "address"
       },
       {
-        "indexed": false,
-        "internalType": "string",
+        "indexed": true,
+        "internalType": "bytes32",
         "name": "taskId",
-        "type": "string"
+        "type": "bytes32"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
+        "internalType": "uint88",
         "name": "reward",
-        "type": "uint256"
+        "type": "uint88"
       }
     ],
     "name": "TaskCompleted",
@@ -153,28 +102,22 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "string",
+        "indexed": true,
+        "internalType": "bytes32",
         "name": "taskId",
-        "type": "string"
+        "type": "bytes32"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
+        "internalType": "uint88",
         "name": "reward",
-        "type": "uint256"
+        "type": "uint88"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "activationDate",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
+        "internalType": "uint8",
         "name": "category",
-        "type": "string"
+        "type": "uint8"
       }
     ],
     "name": "TaskCreated",
@@ -190,16 +133,16 @@
         "type": "address"
       },
       {
-        "indexed": false,
-        "internalType": "string",
+        "indexed": true,
+        "internalType": "bytes32",
         "name": "taskId",
-        "type": "string"
+        "type": "bytes32"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
+        "internalType": "uint80",
         "name": "unlockTime",
-        "type": "uint256"
+        "type": "uint80"
       }
     ],
     "name": "TaskUnlocked",
@@ -221,9 +164,76 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "name": "categoryCompleted",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "name": "categoryRewards",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "name": "categoryTotalTasks",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
         "name": "_category",
-        "type": "string"
+        "type": "uint8"
       }
     ],
     "name": "claimCategoryRewards",
@@ -234,9 +244,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "bytes32",
         "name": "_taskId",
-        "type": "string"
+        "type": "bytes32"
       }
     ],
     "name": "completeTask",
@@ -247,52 +257,24 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "_taskId",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_reward",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_activationDate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "_category",
-        "type": "string"
-      }
-    ],
-    "name": "createTask",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string[]",
+        "internalType": "bytes32[]",
         "name": "_taskIds",
-        "type": "string[]"
+        "type": "bytes32[]"
       },
       {
-        "internalType": "uint256[]",
+        "internalType": "uint88[]",
         "name": "_rewards",
-        "type": "uint256[]"
+        "type": "uint88[]"
       },
       {
-        "internalType": "uint256[]",
+        "internalType": "uint80[]",
         "name": "_activationDates",
-        "type": "uint256[]"
+        "type": "uint80[]"
       },
       {
-        "internalType": "string[]",
+        "internalType": "uint8[]",
         "name": "_categories",
-        "type": "string[]"
+        "type": "uint8[]"
       }
     ],
     "name": "createTasksBatch",
@@ -301,89 +283,34 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getAllTaskIds",
-    "outputs": [
-      {
-        "internalType": "string[]",
-        "name": "",
-        "type": "string[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "_category",
-        "type": "string"
-      }
-    ],
-    "name": "getCategoryPendingRewards",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getContractBalance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
+        "internalType": "bytes32",
         "name": "_taskId",
-        "type": "string"
+        "type": "bytes32"
       }
     ],
     "name": "getTaskInfo",
     "outputs": [
       {
-        "internalType": "string",
-        "name": "taskId",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
+        "internalType": "uint88",
         "name": "reward",
-        "type": "uint256"
+        "type": "uint88"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint80",
         "name": "activationDate",
-        "type": "uint256"
+        "type": "uint80"
+      },
+      {
+        "internalType": "uint8",
+        "name": "category",
+        "type": "uint8"
       },
       {
         "internalType": "bool",
         "name": "isActive",
         "type": "bool"
-      },
-      {
-        "internalType": "string",
-        "name": "category",
-        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -400,19 +327,19 @@
     "name": "getUserStats",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint16",
         "name": "completedTasks",
-        "type": "uint256"
+        "type": "uint16"
       },
       {
-        "internalType": "uint256",
-        "name": "totalRewards",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
+        "internalType": "uint16",
         "name": "checkInStreak",
-        "type": "uint256"
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint80",
+        "name": "lastCheckIn",
+        "type": "uint80"
       }
     ],
     "stateMutability": "view",
@@ -426,9 +353,9 @@
         "type": "address"
       },
       {
-        "internalType": "string",
+        "internalType": "bytes32",
         "name": "_taskId",
-        "type": "string"
+        "type": "bytes32"
       }
     ],
     "name": "getUserTaskInfo",
@@ -439,9 +366,9 @@
         "type": "bool"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint80",
         "name": "completedAt",
-        "type": "uint256"
+        "type": "uint80"
       },
       {
         "internalType": "bool",
@@ -449,14 +376,9 @@
         "type": "bool"
       },
       {
-        "internalType": "uint256",
-        "name": "linkVisitedAt",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
+        "internalType": "uint80",
         "name": "unlockTime",
-        "type": "uint256"
+        "type": "uint80"
       }
     ],
     "stateMutability": "view",
@@ -470,9 +392,9 @@
         "type": "address"
       },
       {
-        "internalType": "string",
+        "internalType": "uint8",
         "name": "_category",
-        "type": "string"
+        "type": "uint8"
       }
     ],
     "name": "isCategoryComplete",
@@ -489,57 +411,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
+        "internalType": "bytes32",
         "name": "_taskId",
-        "type": "string"
-      }
-    ],
-    "name": "isLinkVisited",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "_taskId",
-        "type": "string"
-      }
-    ],
-    "name": "isTaskCompleted",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_taskId",
-        "type": "string"
+        "type": "bytes32"
       }
     ],
     "name": "markLinkVisited",
@@ -562,13 +436,6 @@
   },
   {
     "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "rewardsEnabled",
     "outputs": [
       {
@@ -583,9 +450,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "bytes32",
         "name": "_taskId",
-        "type": "string"
+        "type": "bytes32"
       },
       {
         "internalType": "bool",
@@ -601,56 +468,32 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "bytes32",
         "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "taskIds",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
+        "type": "bytes32"
       }
     ],
     "name": "tasks",
     "outputs": [
       {
-        "internalType": "string",
-        "name": "taskId",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
+        "internalType": "uint88",
         "name": "reward",
-        "type": "uint256"
+        "type": "uint88"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint80",
         "name": "activationDate",
-        "type": "uint256"
+        "type": "uint80"
+      },
+      {
+        "internalType": "uint8",
+        "name": "category",
+        "type": "uint8"
       },
       {
         "internalType": "bool",
         "name": "isActive",
         "type": "bool"
-      },
-      {
-        "internalType": "string",
-        "name": "category",
-        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -685,178 +528,37 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "_taskId",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_newActivationDate",
-        "type": "uint256"
-      }
-    ],
-    "name": "updateTaskActivationDate",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_newBITToken",
-        "type": "address"
-      }
-    ],
-    "name": "updateBITToken",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "",
         "type": "address"
       },
       {
-        "internalType": "string",
+        "internalType": "bytes32",
         "name": "",
-        "type": "string"
-      }
-    ],
-    "name": "userCategoryCompletedTasks",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "name": "userCategoryRewards",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "userCheckInStreak",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "userCompletedTasks",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "userLastCheckIn",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
+        "type": "bytes32"
       }
     ],
     "name": "userTasks",
     "outputs": [
+      {
+        "internalType": "uint80",
+        "name": "completedAt",
+        "type": "uint80"
+      },
+      {
+        "internalType": "uint80",
+        "name": "unlockTime",
+        "type": "uint80"
+      },
       {
         "internalType": "bool",
         "name": "completed",
         "type": "bool"
       },
       {
-        "internalType": "uint256",
-        "name": "completedAt",
-        "type": "uint256"
-      },
-      {
         "internalType": "bool",
         "name": "linkVisited",
         "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "linkVisitedAt",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "unlockTime",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -864,30 +566,6 @@
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "userTotalRewards",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      },
       {
         "internalType": "uint256",
         "name": "_amount",

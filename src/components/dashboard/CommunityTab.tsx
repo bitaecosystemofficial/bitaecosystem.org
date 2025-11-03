@@ -28,9 +28,32 @@ import { useAccount, useReadContract, useWriteContract, useChainId, useSwitchCha
 import { CONTRACT_ADDRESSES, CONTRACT_ABIS, SUPPORTED_CHAINS } from '@/config/contracts';
 import bitLogo from '@/assets/bit-token-logo.png';
 import { TaskAdminPanel } from './TaskAdminPanel';
-import { formatEther } from 'viem';
+import { formatEther, encodeAbiParameters, parseAbiParameters, toHex, pad } from 'viem';
 import { createPublicClient, http } from 'viem';
 import { bsc } from 'viem/chains';
+
+// Helper: Convert string to bytes32
+const stringToBytes32 = (str: string): `0x${string}` => {
+  return pad(toHex(str), { size: 32 }) as `0x${string}`;
+};
+
+// Helper: Convert category string to uint8
+const categoryToUint8 = (category: string): number => {
+  const categoryMap: Record<string, number> = {
+    'check-in': 0,
+    'social': 1,
+    'events': 2,
+    'webinar': 3,
+    'forum': 4,
+  };
+  return categoryMap[category] || 0;
+};
+
+// Helper: Convert uint8 to category string
+const uint8ToCategory = (categoryNum: number): string => {
+  const categories = ['check-in', 'social', 'events', 'webinar', 'forum'];
+  return categories[categoryNum] || 'social';
+};
 
 interface Task {
   id: string;
@@ -74,15 +97,19 @@ const CommunityTab = () => {
     functionName: 'owner',
   });
 
-  // Read all task IDs from contract
-  const { data: taskIdsData, refetch: refetchTaskIds } = useReadContract({
-    address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
-    abi: CONTRACT_ABIS.BITCommunityTasks as any,
-    functionName: 'getAllTaskIds',
-    query: {
-      enabled: isBSCNetwork,
-    },
-  });
+  // Hardcoded task IDs (no dynamic array in gas-optimized contract)
+  const [allTaskIds, setAllTaskIds] = useState<string[]>([
+    // Check-in tasks (Day 1-30)
+    ...Array.from({ length: 30 }, (_, i) => `day-${i + 1}`),
+    // Social tasks
+    'follow-facebook', 'follow-twitter', 'subscribe-youtube', 'join-telegram',
+    // Events tasks
+    'event-1', 'event-2',
+    // Webinar tasks
+    'webinar-1', 'webinar-2',
+    // Forum tasks
+    'forum-1', 'forum-2',
+  ]);
 
   // Fetch user stats from blockchain
   const { data: userStats } = useReadContract({
@@ -95,12 +122,10 @@ const CommunityTab = () => {
     },
   });
 
-  // Update local state from blockchain data
+  // Update local state from blockchain data (uint16 values)
   useEffect(() => {
     if (userStats && Array.isArray(userStats)) {
-      const [completedTasks, totalRewards, checkInStreakValue] = userStats;
-      setTotalPoints(Number(totalRewards));
-      setCheckInStreak(Number(checkInStreakValue));
+      setCheckInStreak(Number(userStats[1])); // checkInStreak is second return value
     }
   }, [userStats]);
 
@@ -119,26 +144,28 @@ const CommunityTab = () => {
 
   useEffect(() => {
     const fetchTasks = async () => {
-      if (!taskIdsData || !Array.isArray(taskIdsData)) {
+      if (!allTaskIds || allTaskIds.length === 0) {
         setLoading(false);
         return;
       }
 
-      const taskPromises = (taskIdsData as string[]).map(async (taskId) => {
+      const taskPromises = allTaskIds.map(async (taskId) => {
         try {
+          const taskIdBytes32 = stringToBytes32(taskId);
+          
           const taskInfo: any = await publicClient.readContract({
             address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
             abi: CONTRACT_ABIS.BITCommunityTasks as any,
             functionName: 'getTaskInfo',
-            args: [taskId] as any,
+            args: [taskIdBytes32] as any,
           } as any);
 
           const userTaskInfo: any = address ? await publicClient.readContract({
             address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
             abi: CONTRACT_ABIS.BITCommunityTasks as any,
             functionName: 'getUserTaskInfo',
-            args: [address, taskId] as any,
-          } as any) : [false, 0, false, 0, 0];
+            args: [address, taskIdBytes32] as any,
+          } as any) : [false, 0n, false, 0n];
 
           const categoryIcons: Record<string, any> = {
             'check-in': Calendar,
@@ -156,20 +183,32 @@ const CommunityTab = () => {
             'forum': 'from-orange-500/20 to-orange-500/5',
           };
 
-          const taskCategory = (taskInfo[4] || 'social') as any;
-          const activationTimestamp = Number(taskInfo[2] || 0);
-          const unlockTimestamp = Number(userTaskInfo[4] || 0);
+          // taskInfo: [reward(uint88), activationDate(uint80), category(uint8), isActive(bool)]
+          const reward = taskInfo[0];
+          const activationDate = taskInfo[1];
+          const categoryNum = taskInfo[2];
+          const isActive = taskInfo[3];
+          
+          // userTaskInfo: [completed(bool), completedAt(uint80), linkVisited(bool), unlockTime(uint80)]
+          const completed = userTaskInfo[0];
+          const completedAt = userTaskInfo[1];
+          const linkVisited = userTaskInfo[2];
+          const unlockTime = userTaskInfo[3];
+          
+          const taskCategory = uint8ToCategory(categoryNum);
+          const activationTimestamp = Number(activationDate);
+          const unlockTimestamp = Number(unlockTime);
           
           return {
             id: taskId,
             title: taskId.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
             description: `Complete this ${taskCategory} task to earn BIT tokens`,
-            reward: parseFloat(formatEther(taskInfo[1] || 0n)),
-            category: taskCategory,
+            reward: parseFloat(formatEther(reward)),
+            category: taskCategory as any,
             icon: categoryIcons[taskCategory] || Users,
             color: categoryColors[taskCategory] || 'from-gray-500/20 to-gray-500/5',
-            completed: userTaskInfo[0] || false,
-            linkVisited: userTaskInfo[2] || false,
+            completed,
+            linkVisited,
             activationDate: activationTimestamp > 0 ? activationTimestamp * 1000 : undefined,
             unlockTime: unlockTimestamp > 0 ? unlockTimestamp * 1000 : undefined,
           };
@@ -185,7 +224,7 @@ const CommunityTab = () => {
     };
 
     fetchTasks();
-  }, [taskIdsData, address]);
+  }, [allTaskIds, address]);
 
   const handleTaskAction = async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
@@ -232,7 +271,7 @@ const CommunityTab = () => {
           address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
           abi: CONTRACT_ABIS.BITCommunityTasks as any,
           functionName: 'markLinkVisited',
-          args: [taskId] as any,
+          args: [stringToBytes32(taskId)] as any,
         } as any);
 
         // Open link in new tab
@@ -286,12 +325,12 @@ const CommunityTab = () => {
     }
 
     try {
-      // Complete task on blockchain
+      // Complete task on blockchain using bytes32
       await writeContract({
         address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
         abi: CONTRACT_ABIS.BITCommunityTasks as any,
         functionName: 'completeTask',
-        args: [taskId] as any,
+        args: [stringToBytes32(taskId)] as any,
       } as any);
 
       // Update local state
@@ -388,11 +427,14 @@ const CommunityTab = () => {
     }
 
     try {
+      // Convert category string to uint8
+      const categoryNum = categoryToUint8(category);
+      
       await writeContract({
         address: CONTRACT_ADDRESSES.BIT_COMMUNITY_TASKS,
         abi: CONTRACT_ABIS.BITCommunityTasks as any,
         functionName: 'claimCategoryRewards',
-        args: [category] as any,
+        args: [categoryNum] as any,
       } as any);
 
       toast({
@@ -400,8 +442,8 @@ const CommunityTab = () => {
         description: `Your ${category} rewards have been sent to your wallet!`,
       });
 
-      // Refetch tasks to update rewards
-      refetchTaskIds();
+      // Force task refresh
+      window.location.reload();
     } catch (error) {
       toast({
         title: 'Claim Failed',
